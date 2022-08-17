@@ -1,0 +1,677 @@
+# Code to do penalized spline with 
+#   q-order difference penalties (q=0-3)
+#    (if q is anything else, no penalty is applied)
+#  Uses B-splines 
+#
+# scatterplot is (x[i],y[i]); k=number of knots (k-2 interior knots), 
+# and pen=penalty
+# returns GCV value for unconstrained & constrained splines
+#   type:  1=monotone increasing 
+#          2=monotone decreasing
+#          3=convex
+#          4=concave
+#          5=convex increasing
+#          6=convex decreasing
+#          7=concave increasing
+#          8=concave decreasing
+#
+#  returns: cfit = constrained fit
+#           ucfit = unconstrained fit
+#           cgcv = constrained GCV
+#           ucgcv = unconstrained GCV
+#           edfc = effective degrees of freedom for constrained fit
+#           edfu = effective degrees of freedom for unconstrained fit
+#           knots
+#           xpl = grid of points for plotting smooth fits
+#           cpl = constrained fit values at xpl
+#           ucpl = unconstrained fit values at xpl
+########################################################################
+### need library(coneproj)
+########################################################################
+penspl=function(type,x,y,k,q,pen){
+  n=length(y)
+  sm=1e-8
+  if(type<=2){
+    ans=bqspline(x,k)
+  }else{ans=bcspline(x,k)}
+  m=length(ans$edges)/n
+  delta=t(ans$edges)
+  dmat=matrix(0,nrow=m-q,ncol=m)
+  #  third-order
+  if(q==3){
+    for(i in 4:m){
+      dmat[i-3,i-3]=1;dmat[i-3,i-2]=-3;dmat[i-3,i-1]=3;dmat[i-3,i]=-1
+    }
+  }
+  # second order
+  if(q==2){
+    for(i in 3:m){
+      dmat[i-2,i-2]=1;dmat[i-2,i-1]=-2;dmat[i-2,i]=1
+    }
+  }
+  # first order
+  if(q==1){
+    for(i in 2:m){
+      dmat[i-1,i-1]=1;dmat[i-1,i]=-1
+    }
+  }
+  # zero order
+  if(q==0){
+    for(i in 1:m){
+      dmat[i,i]=1
+    }
+  }
+  # if q is anything else, no penalty
+  qmat=delta%*%t(delta)+pen*t(dmat)%*%dmat
+  umat=chol(qmat)
+  if(type<=2){
+    smat=ans$slopes
+  }else{smat0=ans$d2}
+  if(type==2){smat=-smat}
+  if(type==3){smat=smat0}
+  if(type==4){smat=-smat0}
+  if(type==5){
+    smat=matrix(0,ncol=m-1,nrow=m)
+    smat[,1:(m-2)]=smat0
+    smat[1,m-1]=-1;smat[2,m-1]=1
+  }
+  if(type==6){
+    smat=matrix(0,ncol=m-1,nrow=m)
+    smat[,1:(m-2)]=smat0
+    smat[m-1,m-1]=1;smat[m,m-1]=-1
+  }
+  if(type==7){
+    smat=matrix(0,ncol=m-1,nrow=m)
+    smat[,1:(m-2)]=-smat0
+    smat[m-1,m-1]=-1;smat[m,m-1]=1
+  }
+  if(type==8){
+    smat=matrix(0,ncol=m-1,nrow=m)
+    smat[,1:(m-2)]=-smat0
+    smat[1,m-1]=1;smat[2,m-1]=-1
+  }
+  xpl=ans$xpl
+  bpl=ans$bpl
+  knots=ans$knots
+  uinv=solve(umat)
+  # make cone edges
+  bmata=t(smat)%*%uinv
+  bmat=matrix(0,ncol=m,nrow=m)
+  if(type==3|type==4){
+    perpmat=matrix(nrow=2,ncol=m)
+    uvec=matrix(runif(2*m),nrow=m,ncol=2)
+    perpmat=uvec-t(bmata)%*%solve(bmata%*%t(bmata))%*%bmata%*%uvec
+    bmat[1:2,]=t(perpmat)
+    bmat[3:m,]=bmata
+    
+  }else{
+    uvec=runif(m)
+    perpvec=uvec-t(bmata)%*%solve(bmata%*%t(bmata))%*%bmata%*%uvec
+    bmat[1,]=perpvec
+    bmat[2:m,]=bmata
+  }
+  edges=t(solve(bmat))
+  ysend=t(uinv)%*%delta%*%y
+  np=1;if(type==3|type==4){np=2}
+  coef=coneproj::coneB(ysend,t(edges[(np+1):m,]),matrix(t(edges[1:np,]),ncol=np))
+  beta=uinv%*%t(edges)%*%coef$coefs
+  yhat=t(delta)%*%beta
+  qinv=solve(qmat)
+  pmat=t(delta)%*%qinv%*%delta
+  ytil=pmat%*%y
+  edfu=sum(diag(pmat))
+  cv=sum((y-ytil)^2)/(1-edfu/n)^2
+  # Compute cv for constrained fit
+  index=coef$coefs>sm
+  index[1]=TRUE
+  gmat=edges[index,]
+  if(length(gmat)/m==1){gmat=matrix(gmat,ncol=m)}
+  pcmat=t(delta)%*%uinv%*%t(gmat)%*%solve(gmat%*%t(gmat))%*%gmat%*%t(uinv)%*%delta
+  edfc=sum(diag(pcmat))
+  cvc=sum((y-yhat)^2)/(1-edfc/n)^2
+  ans=new.env()
+  ans$cfit=yhat
+  ans$ucfit=ytil
+  ans$ucgcv=cv
+  ans$cgcv=cvc
+  ans$edfu=edfu
+  ans$edfc=edfc
+  ans$xpl=xpl
+  ans$cpl=bpl%*%beta
+  ans$ucpl=bpl%*%qinv%*%delta%*%y
+  ans$knots=knots
+  ans
+}
+
+
+
+
+
+############################################
+#
+# Here is the generic hinge code: 
+# project y onto the cone defined by sigma 
+# First p rows of sigma are unconstrained
+#
+# Next rows of sigma are edge vectors
+# 
+# returns coefficient vector
+#
+############################################
+hinge=function(y,sigma,p){
+  
+  n=length(y)
+  m=length(sigma)/n
+  sm=0.00000001
+  
+  # Do Gram-Schmidt orthogonalization of first p rows
+  
+  if(p>0){
+    q1=sigma[1,]/sqrt(sum(sigma[1,]^2))
+  }
+  q=matrix(q1,ncol=1,nrow=n)
+  if(p>1){
+    for(i in 2:p){
+      q1=sigma[i,]-q%*%solve(t(q)%*%q)%*%t(q)%*%sigma[i,]
+      q1=q1/sqrt(sum(q1^2))
+      q=cbind(q,q1)
+    }
+  }
+  l=p
+  if(p>0){
+    h=1:p
+    ones=1:p*0+1
+    r=diag(ones,nrow=p,ncol=p)
+  }
+  
+  # add one edge to start
+  
+  check=0
+  if(p==0){rhat=y}
+  if(p>0){rhat=y-q%*%solve(t(q)%*%q)%*%t(q)%*%y}
+  b2=sigma%*%rhat
+  
+  if(max(b2[(p+1):m])>sm){
+    obs=(p+1):m
+    i=min(obs[b2[(p+1):m]==max(b2[(p+1):m])])
+    l=p+1
+    if(p==0){
+      q=sigma[i,]
+      q=q/sqrt(sum(q^2))
+      h=i
+      r=matrix(1,nrow=1,ncol=1)
+    }
+    if(p>0){
+      q1=sigma[i,]-q%*%solve(t(q)%*%q)%*%t(q)%*%sigma[i,]
+      q1=q1/sqrt(sum(q1^2))
+      q=cbind(q,q1)
+      h[l]=i
+      r=t(q)%*%t(sigma[h,])
+    }
+  }
+  if(max(b2[(p+1):m])<(sm)){
+    check=1
+  }
+  if(check==1){a=t(q)%*%y}
+  # LOOP starts here:
+  nrep=0
+  while(check==0 & nrep<1000){
+    nrep=nrep+1
+    # Fit data to current EDGES
+    
+    a=t(q)%*%y
+    
+    # check if convex: 
+    #first find the b vector:
+    b=1:l*0
+    if(l>1){b[l]=a[l]/r[l,l]
+    for( j in (l-1):1){
+      b[j]=a[j]
+      for(i in (j+1):l){
+        b[j]=b[j]-r[j,i]*b[i]
+      }
+      b[j]=b[j]/r[j,j]
+    }
+    }else{b[l]=a[l]/r}
+    
+    #check to see if b positive
+    
+    if(l>p){
+      obs=(p+1):l
+      i=obs[b[(p+1):l]==min(b[(p+1):l])]
+      if(b[i]<(-sm)){
+        # if not, remove hinge, make new q and r
+        c1=0
+        if(i>1){h=c(h[1:(i-1)],h[(i+1):l])}else{h=h[2:l]}
+        l=l-1
+        if(i>1){
+          q=q[,1:(i-1)]
+          for( j in i:l){
+            qnew=sigma[h[j],]-q%*%t(q)%*%sigma[h[j],]
+            qnew=qnew/sqrt(sum(qnew^2))
+            q=cbind(q,qnew)
+          }
+          r=t(q[,1:l])%*%t(sigma[h,])
+        }
+        if(i==1&l>1){
+          q[,1]=sigma[h[1],]/sqrt(sum(sigma[h[1],]^2))
+          for(j in 2:l){
+            qnew=sigma[h[j],]-q[,1:(j-1)]%*%t(q[,1:(j-1)])%*%sigma[h[j],]
+            qnew=qnew/sqrt(sum(qnew^2))
+            q=cbind(q[,1:(j-1)],qnew)
+          }
+          r=t(q[,1:l])%*%t(sigma[h,])
+        }	
+        if(i==1&l==1){
+          q[,1]=sigma[h[1],]/sqrt(sum(sigma[h[1],]^2))
+          r=matrix(1,nrow=1,ncol=1)
+        }	
+        q=q[,1:l]
+      }
+    }
+    if(b[i]>(-sm)) {
+      c1=1
+      #
+      # now see if we need to add another hinge
+      #
+      theta=q%*%t(q)%*%y
+      rhat=y-theta
+      b2=sigma%*%rhat
+      
+      # check to see if b2 negative
+      
+      obs=(p+1):m
+      i=min(obs[b2[(p+1):m]==max(b2[(p+1):m])])
+      if(l<m&l>0){if(b2[i]>sm){
+        l=l+1
+        qnew=sigma[i,]-q%*%t(q)%*%sigma[i,]
+        qnew=qnew/sqrt(sum(qnew^2))
+        q=cbind(q,qnew)
+        h=c(h,i)
+        r=t(q)%*%t(sigma[h,])
+        c2=0
+      }}
+      if(b2[i]<sm){c2=1}
+      check=c1*c2
+      h
+    }
+  }
+  # find coefficient vector
+  b=1:l*0
+  b[l]=a[l]/r[l,l]
+  if(l>1){
+    for( j in (l-1):1){
+      b[j]=a[j]
+      for(i in (j+1):l){
+        b[j]=b[j]-r[j,i]*b[i]
+      }
+      b[j]=b[j]/r[j,j]
+    }
+  }
+  coef=1:m*0
+  coef[h]=b
+  coef
+}
+########################################
+#       MAKE THE EDGE VECTORS          #
+########################################
+
+##############################################################
+# B-spline quadratic basis
+# returns basis functions and slopes of basis functions
+# at the knots
+bqspline=function(x,m){
+  tk=0:(m-1)/(m-1)*(max(x)-min(x))+min(x)
+  k=3
+  t=1:(m+2*k-2)*0
+  t[1:(k-1)]=min(x);t[(m+k):(m+2*k-2)]=max(x)
+  t[k:(m+k-1)]=tk
+  n=length(x)
+  sm=1e-8
+  h=t[4]-t[3]
+  
+  bmat=matrix(1:(n*(m+k-2))*0,nrow=n)
+  index=x>=t[3]&x<=t[4]
+  bmat[index,1]=(t[4]-x[index])^2
+  bmat[index,2]=2*(x[index]-t[2])*(t[4]-x[index])+(t[5]-x[index])*(x[index]-t[3])
+  index=x>=t[4]&x<=t[5]
+  bmat[index,2]=(t[5]-x[index])^2
+  for( j in 3:(m-1) ){
+    index=x>=t[j]&x<=t[j+1]
+    bmat[index,j]=(x[index]-t[j])^2
+    index=x>=t[j+1]&x<=t[j+2]
+    bmat[index,j]=(x[index]-t[j])*(t[j+2]-x[index])+(x[index]-t[j+1])*(t[j+3]-x[index])
+    index=x>=t[j+2]&x<=t[j+3]
+    bmat[index,j]=(t[j+3]-x[index])^2
+  }
+  index=x>=t[m]&x<=t[m+1]
+  bmat[index,m]=(x[index]-t[m])^2
+  index=x>=t[m+1]&x<=t[m+2]
+  bmat[index,m]=(x[index]-t[m])*(t[m+2]-x[index])+2*(x[index]-t[m+1])*(t[m+3]-x[index])
+  index=x>=t[m+1]&x<=t[m+2]
+  bmat[index,m+1]=(x[index]-t[m+1])^2
+  
+  #################################################
+  # plotting splines
+  
+  xpl=0:1000/1000*(max(x)-min(x))+min(x)
+  bpl=matrix(1:(1001*(m+k-2))*0,nrow=1001)
+  index=xpl>=t[3]&xpl<=t[4]
+  bpl[index,1]=(t[4]-xpl[index])^2
+  bpl[index,2]=2*(xpl[index]-t[2])*(t[4]-xpl[index])+(t[5]-xpl[index])*(xpl[index]-t[3])
+  index=xpl>=t[4]&xpl<=t[5]
+  bpl[index,2]=(t[5]-xpl[index])^2
+  for( j in 3:(m-1) ){
+    index=xpl>=t[j]&xpl<=t[j+1]
+    bpl[index,j]=(xpl[index]-t[j])^2
+    index=xpl>=t[j+1]&xpl<=t[j+2]
+    bpl[index,j]=(xpl[index]-t[j])*(t[j+2]-xpl[index])+(xpl[index]-t[j+1])*(t[j+3]-xpl[index])
+    index=xpl>=t[j+2]&xpl<=t[j+3]
+    bpl[index,j]=(t[j+3]-xpl[index])^2
+  }
+  index=xpl>=t[m]&xpl<=t[m+1]
+  bpl[index,m]=(xpl[index]-t[m])^2
+  index=xpl>=t[m+1]&xpl<=t[m+2]
+  bpl[index,m]=(xpl[index]-t[m])*(t[m+2]-xpl[index])+2*(xpl[index]-t[m+1])*(t[m+3]-xpl[index])
+  index=xpl>=t[m+1]&xpl<=t[m+2]
+  bpl[index,m+1]=(xpl[index]-t[m+1])^2
+  
+  
+  #################################################
+  
+  slopes=matrix(0,ncol=m,nrow=m+k-2)
+  slopes[1,1]=-2*h
+  slopes[m+k-2,m]=2*h
+  slopes[2,1]=4*h
+  slopes[2,2]=-2*h
+  if(m==4){slopes[3,2]=2*h;slopes[3,3]=-2*h}
+  slopes[m+k-3,m]=-4*h
+  slopes[m+k-3,m-1]=2*h
+  if(m>4){
+    for(j in 3:(m+k-4)){
+      slopes[j,j-1]=2*h
+      slopes[j,j]=-2*h
+    }
+  }
+  
+  bmat[,1]=bmat[,1]*2
+  bmat[,m+1]=bmat[,m+1]*2
+  slopes[1,]=slopes[1,]*2
+  slopes[m+1,]=slopes[m+1,]*2
+  bpl[,1]=bpl[,1]*2
+  bpl[,m+1]=bpl[,m+1]*2
+  mb=max(bpl)
+  slopes=slopes/mb
+  bpl=bpl/mb
+  bmat=bmat/mb
+  
+  
+  ans=new.env()
+  ans$edges=bmat
+  ans$slopes=slopes
+  ans$knots=tk
+  ans$xpl=xpl
+  ans$bpl=bpl
+  ans
+}
+
+##############################################################
+# cubic b-splines
+# returns basis functions and 2nd derivative of basis functions
+# at the knots
+##############################################################
+bcspline=function(x,m){
+  tk=0:(m-1)/(m-1)*(max(x)-min(x))+min(x)
+  k=4
+  t=1:(m+2*k-2)*0
+  t[1:(k-1)]=min(x);t[(m+k):(m+2*k-2)]=max(x)
+  t[k:(m+k-1)]=tk
+  n=length(x)
+  sm=1e-8
+  
+  m0=matrix(1:(n*(m+k+1))*0,nrow=n)
+  for( j in 4:(m+k-1) ){
+    if(t[j]<t[j+1]-sm){
+      index=x<=t[j+1]&x>t[j]
+      m0[index,j]=1
+    }
+  }
+  m0[1,k]=1
+  
+  m1=matrix(1:(n*(m+k))*0,nrow=n)
+  for( j in 3:(m+k-1) ){
+    index=x>t[j]&x<=t[j+2]
+    if(t[j+1]>t[j]+sm){
+      p1=(x[index]-t[j])/(t[j+1]-t[j])*m0[index,j]
+    }else{p1=0}
+    if(t[j+2]>t[j+1]+sm){
+      p2= (t[j+2]-x[index])/(t[j+2]-t[j+1])*m0[index,j+1]
+    }else{p2=0}
+    m1[index,j]=p1+p2
+  }
+  imin=x==min(x)
+  m1[imin,k-1]=1
+  
+  
+  m2=matrix(1:(n*(m+k-1))*0,nrow=n)
+  for( j in 2:(m+k-1) ){
+    index=x>t[j]&x<=t[j+3]
+    if(t[j+2]>t[j]+sm){
+      p1=(x[index]-t[j])/(t[j+2]-t[j])*m1[index,j]
+    }else{p1=0}
+    if(t[j+3]>t[j+1]+sm){
+      p2=(t[j+3]-x[index])/(t[j+3]-t[j+1])*m1[index,j+1]
+    }else{p2=0}
+    m2[index,j]=p1+p2
+  }
+  m2[imin,k-2]=1
+  
+  
+  m3=matrix(1:(n*(m+k-2))*0,nrow=n)
+  for( j in 1:(m+k-2) ){
+    index=x>=t[j]&x<=t[j+4]
+    if(t[j+3]>t[j]+sm){
+      p1=(x[index]-t[j])/(t[j+3]-t[j])*m2[index,j]
+    }else{p1=0}
+    if(t[j+4]>t[j+1]+sm){
+      p2=(t[j+4]-x[index])/(t[j+4]-t[j+1])*m2[index,j+1]
+    }else{p2=0}
+    m3[index,j]=p1+p2
+  }
+  
+  #  plotting splines
+  
+  np=1000
+  xpl=0:(np-1)/(np-1)*(max(x)-min(x))+min(x)
+  m0pl=matrix(1:(np*(m+k+1))*0,nrow=np)
+  for( j in 4:(m+k-1) ){
+    if(t[j]<t[j+1]-sm){
+      index=xpl<=t[j+1]&xpl>t[j]
+      m0pl[index,j]=1
+    }
+  }
+  m0pl[1,k]=1
+  m1pl=matrix(1:(np*(m+k))*0,nrow=np)
+  for( j in 3:(m+k-1) ){
+    index=xpl>t[j]&xpl<=t[j+2]
+    if(t[j+1]>t[j]+sm){
+      p1=(xpl[index]-t[j])/(t[j+1]-t[j])*m0pl[index,j]
+    }else{p1=0}
+    if(t[j+2]>t[j+1]+sm){
+      p2= (t[j+2]-xpl[index])/(t[j+2]-t[j+1])*m0pl[index,j+1]
+    }else{p2=0}
+    m1pl[index,j]=p1+p2
+  }
+  m1pl[1,k-1]=1
+  m2pl=matrix(1:(np*(m+k-1))*0,nrow=np)
+  for( j in 2:(m+k-1) ){
+    index=xpl>t[j]&xpl<=t[j+3]
+    if(t[j+2]>t[j]+sm){
+      p1=(xpl[index]-t[j])/(t[j+2]-t[j])*m1pl[index,j]
+    }else{p1=0}
+    if(t[j+3]>t[j+1]+sm){
+      p2=(t[j+3]-xpl[index])/(t[j+3]-t[j+1])*m1pl[index,j+1]
+    }else{p2=0}
+    m2pl[index,j]=p1+p2
+  }
+  m2pl[1,k-2]=1
+  m3pl=matrix(1:(np*(m+k-2))*0,nrow=np)
+  for( j in 1:(m+k-2) ){
+    index=xpl>=t[j]&xpl<=t[j+4]
+    if(t[j+3]>t[j]+sm){
+      p1=(xpl[index]-t[j])/(t[j+3]-t[j])*m2pl[index,j]
+    }else{p1=0}
+    if(t[j+4]>t[j+1]+sm){
+      p2=(t[j+4]-xpl[index])/(t[j+4]-t[j+1])*m2pl[index,j+1]
+    }else{p2=0}
+    m3pl[index,j]=p1+p2
+  }
+  
+  # matrix of second derivatives
+  
+  secder=matrix(0,ncol=m,nrow=m+k-2)
+  secder[1,1]=6
+  secder[2,1]=-9
+  secder[2,2]=3/2
+  secder[3,1]=3
+  secder[3,2]=-5/2
+  secder[3,3]=1
+  if(m>4){
+    for(j in 4:(m-1)){
+      secder[j,j-2]=1;secder[j,j-1]=-2;secder[j,j]=1
+    }
+  }
+  secder[m,m-2]=1
+  secder[m,m-1]=-5/2
+  secder[m,m]=3
+  secder[m+1,m-1]=3/2
+  secder[m+1,m]=-9
+  secder[m+2,m]=6
+  
+  ans=new.env()
+  ans$bpl=m3pl
+  ans$xpl=xpl
+  ans$edges=m3
+  ans$d2=secder
+  ans$knots=tk
+  ans
+}
+
+
+x=runif(50)
+
+y=exp(2*x)+rnorm(50)
+
+
+ans=penspl(5,x,y,10,3,2.5)
+
+plot(x,y)
+
+lines(ans$xpl,ans$cpl)
+
+lines(ans$xpl,ans$ucpl,col=2)
+
+y_clean = exp(2*ans$xpl)
+
+
+# how many times do we run the simulation
+runs = 50
+# how many datapoint in each run
+n_candidates = c(50,100,200,400,800)
+
+
+run_simulation <-function(runs,n_candidates, objective_function, objective_function_name){
+  unconstrained_errors <- character(runs)
+  constrained_errors <- character(runs)
+  # Create the data frame.
+  sim_results <- data.frame(
+    runs="",
+    n="",
+    objective_function="",
+    constrained_errors="",
+    unconstrained_errors="",
+    #time
+    stringsAsFactors = FALSE
+  )
+  for (n in n_candidates){
+    for (i in 1:runs) {
+      x = runif(n)
+      y_clean = objective_function(ans$xpl)
+      y = rnorm(n)
+      ans = penspl(5,x,y,n/5,3,2.5)
+      constrained_errors[i] = mean((ans$cpl - y_clean)^2)
+      unconstrained_errors[i] = mean((ans$ucpl - y_clean)^2)
+    }
+    unconstrained_errors = as.numeric(unconstrained_errors)
+    constrained_errors = as.numeric(constrained_errors)
+    unc_errors = mean(unconstrained_errors) 
+    con_errors =mean(constrained_errors)
+    # Create the data frame.
+    sim_results = rbind(sim_results, data.frame(
+      runs = runs,
+      n = n,
+      objective_function = c(objective_function_name),
+      constrained_errors = c(con_errors),
+      unconstrained_errors = c(unc_errors),
+      #time
+      stringsAsFactors = FALSE)
+    )
+    
+  }
+  
+  
+  
+  return(sim_results)
+}
+
+
+function_1 <- function(x){
+  return(x^3)
+}
+function_1_name = "x-> x^3"
+
+function_2 <- function(x){
+  return(-0.005*x +3)
+}
+function_2_name = "x -> -0.005*x +3"
+
+function_3 <- function(x){
+  return(2+x^3-0.2*x)
+}
+function_3_name = "x -> x^3 - 0.2x + 2"
+
+objective_functions = list(
+  list(function(x) function_1(x),name = function_1_name),
+  list(f = function(x) function_2(x),name = function_2_name),
+  list(f = function(x) function_3(x),name = function_3_name)
+)
+
+objective_functions_2 = list(
+  function(x) function_1(x),
+  function(x) function_2(x),
+  function(x) function_3(x)
+)
+
+objective_functions_2[[1]](2)
+objective_functions[[1]][[1]](2)
+
+
+
+function_0 <- function(x){
+  return(x + 1)
+}
+
+
+sim_results = run_simulation(runs,n,function_0,"x -> x + 1")
+
+for (bundle in objective_functions){
+  sim_results = rbind(sim_results,run_simulation(runs,n_candidates,bundle[[1]],bundle[[2]]))
+  
+}
+
+print(sim_results)
+
+#run_simulation(runs,n,function_1, "x -> x^3")
+
+
+
