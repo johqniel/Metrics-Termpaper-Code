@@ -575,9 +575,9 @@ y_clean = exp(2*ans$xpl)
 
 
 # how many times do we run the simulation
-runs = 50
+runs = 10
 # how many datapoint in each run
-n_candidates = c(50,100,200,400,800)
+n_candidates = c(50,1000)
 
 
 run_simulation <-function(runs,n_candidates, objective_function, objective_function_name){
@@ -586,7 +586,8 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
   # Create the data frame.
   sim_results <- data.frame(
     runs="",
-    n="",
+    datapoints="",
+    knots="",
     objective_function="",
     constrained_errors="",
     unconstrained_errors="",
@@ -598,7 +599,7 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
       x = runif(n)
       y_clean = objective_function(ans$xpl)
       y = rnorm(n)
-      ans = penspl(5,x,y,n/5,3,2.5)
+      ans = penspl(5,x,y,round(3 * (n^0.5),digits = 0),3,2.5)
       constrained_errors[i] = mean((ans$cpl - y_clean)^2)
       unconstrained_errors[i] = mean((ans$ucpl - y_clean)^2)
     }
@@ -609,7 +610,8 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
     # Create the data frame.
     sim_results = rbind(sim_results, data.frame(
       runs = runs,
-      n = n,
+      datapoints = n,
+      knots = round(3*(n^0.5)),
       objective_function = c(objective_function_name),
       constrained_errors = c(con_errors),
       unconstrained_errors = c(unc_errors),
@@ -665,7 +667,8 @@ function_0 <- function(x){
 sim_results = run_simulation(runs,n,function_0,"x -> x + 1")
 
 for (bundle in objective_functions){
-  sim_results = rbind(sim_results,run_simulation(runs,n_candidates,bundle[[1]],bundle[[2]]))
+  sim_results_new = run_simulation(runs,n_candidates,bundle[[1]],bundle[[2]])
+  sim_results = rbind(sim_results,sim_results_new)
   
 }
 
