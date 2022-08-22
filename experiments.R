@@ -627,6 +627,7 @@ n_candidates = c(50,1000)
 
 
 run_simulation <-function(runs,n_candidates, objective_function, objective_function_name){
+  p = 3 # degree of splines used
   unconstrained_errors <- character(runs)
   constrained_errors <- character(runs)
   unconstrained_errors_data <- character(runs)
@@ -649,7 +650,8 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
     for (i in 1:runs) {
       x = runif(n)
       y = objective_function(x) + rnorm(n)
-      ans = penspl(5,x,y,round(3 * (n^0.5),digits = 0),3,2.5)
+      print("we get to penspl")
+      ans = penspl(5,x,y,round(3 * (n^(1/(2*p + 3))),digits = 0),3,2.5)
       x = find_x_new(ans$xpl,x)
       y_clean = objective_function(ans$xpl)
       y_clean_data = objective_function(x)
@@ -670,12 +672,12 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
     sim_results = rbind(sim_results, data.frame(
       runs = runs,
       datapoints = n,
-      knots = round(3*(n^0.5)),
+      knots = round(3*(n^(1/(2*p + 3)))),
       objective_function = c(objective_function_name),
       constrained_errors_data = c(con_errors_data),
       unconstrained_errors_data = c(unc_errors_data),
-      constrained_errors_data = c(constrained_errors),
-      unconstrained_errors_data = c(unconstrained_errors),
+      constrained_errors = c(constrained_errors),
+      unconstrained_errors = c(unconstrained_errors),
       
       #time
       stringsAsFactors = FALSE)
@@ -704,10 +706,17 @@ function_3 <- function(x){
 }
 function_3_name = "x -> x^3 - 0.2x + 2"
 
+function_4 <- function(x){
+  return(-x^3)
+}
+
+function_4_name = "x -> -x^3"
+
 objective_functions = list(
   list(function(x) function_1(x),name = function_1_name),
   list(f = function(x) function_2(x),name = function_2_name),
-  list(f = function(x) function_3(x),name = function_3_name)
+  list(f = function(x) function_3(x),name = function_3_name),
+  list(f = function(x) function_4(x),name = function_4_name)
 )
 
 objective_functions_2 = list(
