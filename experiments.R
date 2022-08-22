@@ -567,12 +567,58 @@ ans=penspl(5,x,y,10,3,2.5)
 
 plot(x,y)
 
+print(ans$xpl)
+
 lines(ans$xpl,ans$cpl)
 
 lines(ans$xpl,ans$ucpl,col=2)
 
 y_clean = exp(2*ans$xpl)
 
+find_x_new <- function(xpl, x){
+  i = 1
+  for (candidate in xpl){
+    if (x[i]-candidate < 0){
+      x[i] = candidate
+      i = i + 1
+      #print("change")
+    } 
+  }
+  return(x)
+}
+
+find_indizes <- function(xpl,x){
+  i = 1
+  j = 1
+  for (candidate in xpl){
+    if (x[i]-candidate < 0){
+      x[i] = j
+      i = i + 1
+      #print("change")
+    } 
+    j = j + 1
+  }
+  return(x)
+}
+
+find_y <- function(xpl,y,x){
+  i = 1
+  j = 1
+  for (candidate in xpl){
+    if (x[i]-candidate < 0){
+      x[i] = y[j]
+      i = i + 1
+      #print("change")
+    } 
+    j = j + 1 
+  }
+  return(x)
+  
+}
+
+
+print(x)
+print(find_x_new(ans$xpl,x))
 
 # how many times do we run the simulation
 runs = 10
@@ -583,38 +629,54 @@ n_candidates = c(50,1000)
 run_simulation <-function(runs,n_candidates, objective_function, objective_function_name){
   unconstrained_errors <- character(runs)
   constrained_errors <- character(runs)
+  unconstrained_errors_data <- character(runs)
+  constrained_errors_data <- character(runs)
+                                  
   # Create the data frame.
   sim_results <- data.frame(
     runs="",
     datapoints="",
     knots="",
     objective_function="",
-    constrained_errors="",
-    unconstrained_errors="",
+    constrained_errors_data="",
+    unconstrained_errors_data="",
+    constrained_errors = "",
+    unconstrained_errors = "",
     #time
     stringsAsFactors = FALSE
   )
   for (n in n_candidates){
     for (i in 1:runs) {
       x = runif(n)
-      y_clean = objective_function(ans$xpl)
-      y = rnorm(n)
+      y = objective_function(x) + rnorm(n)
       ans = penspl(5,x,y,round(3 * (n^0.5),digits = 0),3,2.5)
-      constrained_errors[i] = mean((ans$cpl - y_clean)^2)
-      unconstrained_errors[i] = mean((ans$ucpl - y_clean)^2)
+      x = find_x_new(ans$xpl,x)
+      y_clean = objective_function(ans$xpl)
+      y_clean_data = objective_function(x)
+      y_constrained_data = find_y(ans$xpl,ans$cpl,x)
+      y_unconstrained_data = find_y(ans$xpl,ans$ucpl,x)
+      constrained_errors_data[i] = mean(abs(y_constrained_data - y_clean_data))
+      unconstrained_errors_data[i] = mean(abs(y_unconstrained_data - y_clean_data))
+      constrained_errors[i] = mean(abs(objective_function(ans$xpl)-ans$cpl))
+      unconstrained_errors[i] = mean(abs(objective_function(ans$xpl)-ans$ucpl))
     }
-    unconstrained_errors = as.numeric(unconstrained_errors)
-    constrained_errors = as.numeric(constrained_errors)
-    unc_errors = mean(unconstrained_errors) 
-    con_errors =mean(constrained_errors)
+    unconstrained_errors = mean(as.numeric(unconstrained_errors))
+    constrained_errors = mean(as.numeric(constrained_errors))
+    unconstrained_errors_data = as.numeric(unconstrained_errors_data)
+    constrained_errors_data = as.numeric(constrained_errors_data)
+    unc_errors_data = mean(unconstrained_errors_data) 
+    con_errors_data =mean(constrained_errors_data)
     # Create the data frame.
     sim_results = rbind(sim_results, data.frame(
       runs = runs,
       datapoints = n,
       knots = round(3*(n^0.5)),
       objective_function = c(objective_function_name),
-      constrained_errors = c(con_errors),
-      unconstrained_errors = c(unc_errors),
+      constrained_errors_data = c(con_errors_data),
+      unconstrained_errors_data = c(unc_errors_data),
+      constrained_errors_data = c(constrained_errors),
+      unconstrained_errors_data = c(unconstrained_errors),
+      
       #time
       stringsAsFactors = FALSE)
     )
@@ -664,7 +726,7 @@ function_0 <- function(x){
 }
 
 
-sim_results = run_simulation(runs,n,function_0,"x -> x + 1")
+sim_results = run_simulation(runs,n_candidates,function_0,"x -> x + 1")
 
 for (bundle in objective_functions){
   sim_results_new = run_simulation(runs,n_candidates,bundle[[1]],bundle[[2]])
