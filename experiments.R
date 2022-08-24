@@ -564,8 +564,22 @@ y=exp(2*x)+rnorm(50)
 
 
 ans=penspl(5,x,y,10,3,2.5)
+print(ans$cpl)
 
-plot(x,y)
+ans = divide_ans(ans,5)
+
+print(ans$cpl)
+
+ans = add_ans(ans,ans)
+
+print(ans$cpl)
+ans = divide_ans(ans,5)
+
+
+ans_df = as.data.frame(as.list(ans))
+
+ans_df
+
 
 print(ans$xpl)
 
@@ -574,6 +588,49 @@ lines(ans$xpl,ans$cpl)
 lines(ans$xpl,ans$ucpl,col=2)
 
 y_clean = exp(2*ans$xpl)
+
+divide_ans <- function(ans,runs){
+  
+  #           cfit = constrained fit
+  #           ucfit = unconstrained fit
+  #           cgcv = constrained GCV
+  #           ucgcv = unconstrained GCV
+  #           edfc = effective degrees of freedom for constrained fit
+  #           edfu = effective degrees of freedom for unconstrained fit
+  #           knots
+  #           xpl = grid of points for plotting smooth fits
+  #           cpl = constrained fit values at xpl
+  #           ucpl = unconstrained fit values at xpl
+  
+  ans$cfit = ans$cfit / runs
+  ans$ucfit = ans$ucfit / runs
+  ans$cgcv = ans$cgcv / runs
+  ans$ucgv = ans$ucgv / runs
+  ans$cpl = ans$cpl / runs
+  ans$ucpl = ans$ucpl / runs
+  return(ans)
+}
+
+add_ans <- function(ans_1,ans_2){
+  #           cfit = constrained fit
+  #           ucfit = unconstrained fit
+  #           cgcv = constrained GCV
+  #           ucgcv = unconstrained GCV
+  #           edfc = effective degrees of freedom for constrained fit
+  #           edfu = effective degrees of freedom for unconstrained fit
+  #           knots
+  #           xpl = grid of points for plotting smooth fits
+  #           cpl = constrained fit values at xpl
+  #           ucpl = unconstrained fit values at xpl
+  ans_1$cfit = ans_1$cfit+ans_2$cfit
+  ans_1$ucfit = ans_1$ucfit + ans_2$ucfit
+  ans_1$cgcv = ans_1$cgcv + ans_1$cgcv
+  ans_1$ucgv = ans_1$ucgv + ans_2$ucgv
+  ans_1$cpl = ans_1$cpl + ans_2$cpl
+  ans_1$ucpl = ans_1$ucpl + ans_2$ucpl
+  return(ans_1)
+   
+}
 
 find_x_new <- function(xpl, x){
   i = 1
@@ -617,23 +674,24 @@ find_y <- function(xpl,y,x){
 }
 
 
-print(x)
-print(find_x_new(ans$xpl,x))
 
 # how many times do we run the simulation
 runs = 10
 # how many datapoint in each run
-n_candidates = c(50,1000)
+n_candidates = c(50,100)
 
 
 run_simulation <-function(runs,n_candidates, objective_function, objective_function_name){
   p = 3 # degree of splines used
   unconstrained_errors <- character(runs)
   constrained_errors <- character(runs)
-  unconstrained_errors_data <- character(runs)
-  constrained_errors_data <- character(runs)
+  #ans_list <- list(length(n_candidates))
+  j = 0
+  #unconstrained_errors_data <- character(runs)
+  #constrained_errors_data <- character(runs)
+  
                                   
-  # Create the data frame.
+  # Create the data frames.
   sim_results <- data.frame(
     runs="",
     datapoints="",
@@ -646,12 +704,27 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
     #time
     stringsAsFactors = FALSE
   )
+
+
+  
   for (n in n_candidates){
+    print("enters for")
+    print("j equals:")
+    print(j)
+    j = j + 1
+    
     for (i in 1:runs) {
+      print("enter runs")
       x = runif(n)
       y = objective_function(x) + rnorm(n)
       #print("we get to penspl")
       ans = penspl(5,x,y,round(3 * (n^(1/(2*p + 3))),digits = 0),3,2.5)
+      if (i == 1){
+        ans_mean = ans
+      }
+      else{
+        ans_mean = add_ans(ans_mean,ans)
+      }
       #x = find_x_new(ans$xpl,x)
       y_clean = objective_function(ans$xpl)
       #y_clean_data = objective_function(x)
@@ -668,7 +741,17 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
     #constrained_errors_data = as.numeric(constrained_errors_data)
     #unc_errors_data = mean(unconstrained_errors_data) 
     #con_errors_data =mean(constrained_errors_data)
-    # Create the data frame.
+    
+    
+    if (j == 1){
+      print("ans_means defined")
+      ans_means = list(ans_mean)
+    }
+    else{
+      ans_means = c(ans_means, ans_mean)
+    }
+
+  
     sim_results = rbind(sim_results, data.frame(
       runs = runs,
       datapoints = n,
@@ -686,14 +769,10 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
   }
   
   
-  
-  return(list(sim_results,ans))
+  print("lol")
+  return(list("stats" = sim_results, "data" = ans_means))
 }
 
-plot_simulation <- function(sim_results){
-  error_table = sim_results[[1]]
-  ans = sim_results[[2]]
-}
   
 
 function_1 <- function(x){
@@ -740,10 +819,11 @@ function_0 <- function(x){
 }
 
 
-sim_results = run_simulation(runs,n_candidates,function_0,"x -> x + 1")[[1]]
+sim_results = run_simulation(runs,n_candidates,function_0,"x -> x + 1")$stats
+sim_results
 
 for (bundle in objective_functions){
-  sim_results_new = run_simulation(runs,n_candidates,bundle[[1]],bundle[[2]])[[1]]
+  sim_results_new = run_simulation(runs,n_candidates,bundle[[1]],bundle[[2]])$stats
   sim_results = rbind(sim_results,sim_results_new)
   
 }
