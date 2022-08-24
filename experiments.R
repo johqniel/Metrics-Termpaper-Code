@@ -623,7 +623,7 @@ print(find_x_new(ans$xpl,x))
 # how many times do we run the simulation
 runs = 10
 # how many datapoint in each run
-n_candidates = c(50,1000)
+n_candidates = c(50,1000,10000)
 
 
 run_simulation <-function(runs,n_candidates, objective_function, objective_function_name){
@@ -650,7 +650,7 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
     for (i in 1:runs) {
       x = runif(n)
       y = objective_function(x) + rnorm(n)
-      print("we get to penspl")
+      #print("we get to penspl")
       ans = penspl(5,x,y,round(3 * (n^(1/(2*p + 3))),digits = 0),3,2.5)
       x = find_x_new(ans$xpl,x)
       y_clean = objective_function(ans$xpl)
