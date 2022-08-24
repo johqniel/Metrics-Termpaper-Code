@@ -770,7 +770,7 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
   
   
   print("lol")
-  return(list("stats" = sim_results, "data" = ans_means))
+  return(sim_results)
 }
 
   
@@ -819,8 +819,8 @@ function_0 <- function(x){
 }
 
 
-sim_results = run_simulation(runs,n_candidates,function_0,"x -> x + 1")$stats
-sim_results
+sim_results = run_simulation(runs,n_candidates,function_0,"x -> x + 1")
+print(sim_results)
 
 for (bundle in objective_functions){
   sim_results_new = run_simulation(runs,n_candidates,bundle[[1]],bundle[[2]])$stats
