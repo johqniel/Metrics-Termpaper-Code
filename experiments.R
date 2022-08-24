@@ -564,21 +564,8 @@ y=exp(2*x)+rnorm(50)
 
 
 ans=penspl(5,x,y,10,3,2.5)
-print(ans$cpl)
-
-ans = divide_ans(ans,5)
-
-print(ans$cpl)
-
-ans = add_ans(ans,ans)
-
-print(ans$cpl)
-ans = divide_ans(ans,5)
 
 
-ans_df = as.data.frame(as.list(ans))
-
-ans_df
 
 
 print(ans$xpl)
@@ -770,7 +757,7 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
   
   
   print("lol")
-  return(sim_results)
+  return(list("stats" = sim_results, "data" = ans_means))
 }
 
   
@@ -828,7 +815,7 @@ for (bundle in objective_functions){
   
 }
 
-print(sim_results)
+print(sim_results$data)[[1]]$xpl
 
 #run_simulation(runs,n,function_1, "x -> x^3")
 
