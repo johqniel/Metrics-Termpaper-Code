@@ -761,63 +761,76 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
 }
 
   
-
-function_1 <- function(x){
-  return(x^3)
-}
-function_1_name = "x-> x^3"
-
-function_2 <- function(x){
-  return(-0.005*x +3)
-}
-function_2_name = "x -> -0.005*x +3"
-
-function_3 <- function(x){
-  return(2+x^3-0.2*x)
-}
-function_3_name = "x -> x^3 - 0.2x + 2"
-
-function_4 <- function(x){
-  return(-x^3)
-}
-
-function_4_name = "x -> -x^3"
-
-objective_functions = list(
-  list(function(x) function_1(x),name = function_1_name),
-  list(f = function(x) function_2(x),name = function_2_name),
-  list(f = function(x) function_3(x),name = function_3_name),
-  list(f = function(x) function_4(x),name = function_4_name)
-)
-
-objective_functions_2 = list(
-  function(x) function_1(x),
-  function(x) function_2(x),
-  function(x) function_3(x)
-)
-
-objective_functions_2[[1]](2)
-objective_functions[[1]][[1]](2)
-
-
-
-function_0 <- function(x){
-  return(x + 1)
-}
-
-
-sim_results = run_simulation(runs,n_candidates,function_0,"x -> x + 1")
-print(sim_results)
-
-for (bundle in objective_functions){
-  sim_results_new = run_simulation(runs,n_candidates,bundle[[1]],bundle[[2]])$stats
-  sim_results = rbind(sim_results,sim_results_new)
+if (TRUE == TRUE){
+  function_1 <- function(x){
+    return(x^3)
+  }
+  function_1_name = "x-> x^3"
   
+  function_2 <- function(x){
+    return(-0.005*x +3)
+  }
+  function_2_name = "x -> -0.005*x +3"
+  
+  function_3 <- function(x){
+    return(2+x^3-0.2*x)
+  }
+  function_3_name = "x -> x^3 - 0.2x + 2"
+  
+  function_4 <- function(x){
+    return(-x^3)
+  }
+
+
+
+  function_4_name = "x -> -x^3"
+  
+  objective_functions = list(
+    list(function(x) function_1(x),name = function_1_name,data = NULL),
+    list(f = function(x) function_2(x),name = function_2_name, data = NULL),
+    list(f = function(x) function_3(x),name = function_3_name, data = NULL),
+    list(f = function(x) function_4(x),name = function_4_name, data = NULL)
+  )
+  
+  objective_functions_2 = list(
+    function(x) function_1(x),
+    function(x) function_2(x),
+    function(x) function_3(x)
+  )
+  
+  objective_functions_2[[1]](2)
+  objective_functions[[1]][[1]](2)
+
+
+
+
+  function_0 <- function(x){
+    return(x + 1)
+  }
+
+} # Here we define objective functions
+
+
+sim_results = run_simulation(runs,n_candidates,function_0,"x -> x + 1")$stats
+print("worked")
+
+i = 1
+for (bundle in objective_functions){
+  print("i equals:")
+  print(i)
+  
+  sim_results_new = run_simulation(runs,n_candidates,bundle[[1]],bundle[[2]])
+  sim_results = rbind(sim_results,sim_results_new$stats)
+  objective_functions[[i]][[3]] = sim_results_new$data 
+  i = i + 1
 }
 
-print(sim_results$data)[[1]]$xpl
+#print(sim_results$data)[[1]]$xpl
 
 #run_simulation(runs,n,function_1, "x -> x^3")
 
 
+print(sim_results)
+print("objective_functions equals:")
+objective_functions[[1]]$data[[1]]$cpl
 
