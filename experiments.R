@@ -760,6 +760,17 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
   return(list("stats" = sim_results, "data" = ans_means))
 }
 
+plot_results <- function(runs, n, objective_function_name,  objective_function, data){
+  x = runif(50)
+  
+  y = objective_function(x) + rnorm(50)
+  
+  plot(x,y)
+  
+  lines(data$xpl,data()$cpl)
+  
+  lines(data$xpl,data$ucpl,col=2)
+}
   
 if (TRUE == TRUE){
   function_1 <- function(x){
@@ -810,27 +821,42 @@ if (TRUE == TRUE){
 
 } # Here we define objective functions
 
+if (TRUE == TRUE){
 
-sim_results = run_simulation(runs,n_candidates,function_0,"x -> x + 1")$stats
-print("worked")
-
-i = 1
-for (bundle in objective_functions){
-  print("i equals:")
-  print(i)
+  sim_results = run_simulation(runs,n_candidates,function_0,"x -> x + 1")$stats
+  print("worked")
   
-  sim_results_new = run_simulation(runs,n_candidates,bundle[[1]],bundle[[2]])
-  sim_results = rbind(sim_results,sim_results_new$stats)
-  objective_functions[[i]][[3]] = sim_results_new$data 
-  i = i + 1
-}
+  i = 1
+  for (bundle in objective_functions){
+    print("i equals:")
+    print(i)
+    
+    sim_results_new = run_simulation(runs,n_candidates,bundle[[1]],bundle[[2]])
+    sim_results = rbind(sim_results,sim_results_new$stats)
+    objective_functions[[i]][[3]] = sim_results_new$data 
+    i = i + 1
+  }
+  
+  #print(sim_results$data)[[1]]$xpl
+  
+  #run_simulation(runs,n,function_1, "x -> x^3")
+  
+  
+  print(sim_results)
+  print("objective_functions equals:")
+  objective_functions[[1]]$data[[1]]$cpl
 
-#print(sim_results$data)[[1]]$xpl
-
-#run_simulation(runs,n,function_1, "x -> x^3")
-
-
-print(sim_results)
-print("objective_functions equals:")
-objective_functions[[1]]$data[[1]]$cpl
-
+  for (bundle in objective_functions){
+    objective_function = bundle[[1]]
+    objective_function_name = bundle[[2]]
+    
+    
+    i = 1
+    for (n in n_candidates){
+      data = bundle[[3]][[i]]
+      plot_results(runs,n,objective_function_name,objective_function,data)
+      i = i+1
+    }  
+  }
+  
+} # testing
