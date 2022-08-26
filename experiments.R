@@ -663,9 +663,9 @@ find_y <- function(xpl,y,x){
 
 
 # how many times do we run the simulation
-runs = 10
+runs = 1
 # how many datapoint in each run
-n_candidates = c(1000)
+n_candidates = c(10,50,100,500,1000,10000)
 
 
 run_simulation <-function(runs,n_candidates, objective_function, objective_function_name){
@@ -722,6 +722,7 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
       constrained_errors[i] = mean(abs(objective_function(ans$xpl)-ans$cpl))
       unconstrained_errors[i] = mean(abs(objective_function(ans$xpl)-ans$ucpl))
     }
+    ans_mean = divide_ans(ans_mean,runs)
     unconstrained_errors = mean(as.numeric(unconstrained_errors))
     constrained_errors = mean(as.numeric(constrained_errors))
     #unconstrained_errors_data = as.numeric(unconstrained_errors_data)
