@@ -665,7 +665,7 @@ find_y <- function(xpl,y,x){
 # how many times do we run the simulation
 runs = 10
 # how many datapoint in each run
-n_candidates = c(50,100)
+n_candidates = c(1000)
 
 
 run_simulation <-function(runs,n_candidates, objective_function, objective_function_name){
@@ -761,15 +761,19 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
 }
 
 plot_results <- function(runs, n, objective_function_name,  objective_function, data){
-  x = runif(50)
   
-  y = objective_function(x) + rnorm(50)
+  true_y = objective_function(data$xpl)
   
-  plot(x,y)
+  plot(data$xpl,true_y,type= "l",col = "black", ylab = "y", xlab = "x")
   
-  lines(data$xpl,data()$cpl)
+  lines(data$xpl,data$cpl, col = "blue")
   
-  lines(data$xpl,data$ucpl,col=2)
+  lines(data$xpl,data$ucpl,col="red")
+  
+  #lines(data$xpl,true_y,col = "black")
+  
+  legend("topleft", legend=c("constrained","unconstrained","objective"), col = c("blue","red","black"),lty=1:2,cex=0.8,title = paste(objective_function_name,", n =",as.character(n)))
+  
 }
   
 if (TRUE == TRUE){
@@ -844,19 +848,44 @@ if (TRUE == TRUE){
   
   print(sim_results)
   print("objective_functions equals:")
-  objective_functions[[1]]$data[[1]]$cpl
-
+  print(objective_functions[[1]])
+  objective_functions[[1]]$data[[1]]$xpl
+  objective_functions[[1]][[3]][[1]]$xpl
+  print("done")
+  
+  
+  plot_results(runs,1000,objective_functions[[1]]$name,objective_functions[[1]]$f,objective_functions[[1]]$data[[1]])
+               
+               
+  j = 1
   for (bundle in objective_functions){
+    print("bundle:")
+    print(bundle)
     objective_function = bundle[[1]]
+    print("objective evaluated")
+    print(objective_function(5))
+    
     objective_function_name = bundle[[2]]
     
     
     i = 1
     for (n in n_candidates){
-      data = bundle[[3]][[i]]
+      data = ((objective_functions[[1]])$data)[[1]]
+      xps = objective_functions[[j]]$data[[i]]$xps
+      print("jetzt kommt xps:")
+      print(xps)
+      print("zweiter Versuch")
+      print(data$xps)
+      xps = objective_functions[[1]]$data[[1]]$xps
+      print("versuch drei")
+      print(xps)
+      print("about to plot i equals %", i)
+      
       plot_results(runs,n,objective_function_name,objective_function,data)
+      print("plotted")
       i = i+1
-    }  
+    } 
+    j = j + 1
   }
   
 } # testing
