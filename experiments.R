@@ -854,8 +854,11 @@ if (TRUE == TRUE){
   print("done")
   
   
-  plot_results(runs,1000,objective_functions[[1]]$name,objective_functions[[1]]$f,objective_functions[[1]]$data[[1]])
-               
+  plot_results(runs,1000,objective_functions[[1]]$name,objective_functions[[1]][[1]],objective_functions[[1]]$data[[1]])
+
+}
+
+if (TRUE == FALSE){
                
   j = 1
   for (bundle in objective_functions){
@@ -871,14 +874,14 @@ if (TRUE == TRUE){
     i = 1
     for (n in n_candidates){
       data = ((objective_functions[[1]])$data)[[1]]
-      xps = objective_functions[[j]]$data[[i]]$xps
+      xpl = objective_functions[[j]]$data[[i]]$xpl
       print("jetzt kommt xps:")
-      print(xps)
+      print(xpl)
       print("zweiter Versuch")
       print(data$xps)
-      xps = objective_functions[[1]]$data[[1]]$xps
+      xpl = objective_functions[[1]]$data[[1]]$xpl
       print("versuch drei")
-      print(xps)
+      print(xpl)
       print("about to plot i equals %", i)
       
       plot_results(runs,n,objective_function_name,objective_function,data)
@@ -889,3 +892,24 @@ if (TRUE == TRUE){
   }
   
 } # testing
+
+
+
+x=runif(100)
+
+y=objective_functions[[1]][[1]](x)+rnorm(100)
+
+ans=penspl(5,x,y,10,3,2.5)
+
+y_clean = objective_functions[[1]][[1]](ans$xpl)
+
+plot(x,y)
+
+lines(ans$xpl,ans$cpl, col = "blue")
+
+lines(ans$xpl,ans$ucpl,col= "red")
+
+lines(ans$xpl,y_clean,col = "black")
+
+legend("topleft", legend=c("constrained","unconstrained","objective"), col = c("blue","red","black"),lty=1:2,cex=0.8,title = paste(objective_functions[[1]]$name,", n =",as.character(100)))
+
