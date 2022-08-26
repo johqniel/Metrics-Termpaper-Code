@@ -665,7 +665,7 @@ find_y <- function(xpl,y,x){
 # how many times do we run the simulation
 runs = 1
 # how many datapoint in each run
-n_candidates = c(10,50,100,500,1000,10000)
+n_candidates = c(10,50,100,500)
 
 
 run_simulation <-function(runs,n_candidates, objective_function, objective_function_name){
@@ -836,7 +836,7 @@ if (TRUE == TRUE){
     print("i equals:")
     print(i)
     
-    sim_results_new = run_simulation(runs,n_candidates,bundle[[1]],bundle[[2]])
+    sim_results_new = run_simulation(runs,n_candidates,bundle[[i]],bundle[[j]])
     sim_results = rbind(sim_results,sim_results_new$stats)
     objective_functions[[i]][[3]] = sim_results_new$data 
     i = i + 1
@@ -855,11 +855,9 @@ if (TRUE == TRUE){
   print("done")
   
   
-  plot_results(runs,1000,objective_functions[[1]]$name,objective_functions[[1]][[1]],objective_functions[[1]]$data[[1]])
+  #plot_results(runs,1000,objective_functions[[1]]$name,objective_functions[[1]][[1]],objective_functions[[1]]$data[[1]])
 
-}
 
-if (TRUE == FALSE){
                
   j = 1
   for (bundle in objective_functions){
