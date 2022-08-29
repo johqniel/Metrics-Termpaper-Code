@@ -670,15 +670,17 @@ find_y <- function(xpl,y,x){
 
 # how many times do we run the simulation
 runs = 1
-# how many datapoint in each run
+# how many datapoints in each run
 n_candidates = c(3000)
+
+
 
 
 run_simulation <-function(runs,n_candidates, objective_function, objective_function_name){
   p = 3 # degree of splines used
-  unconstrained_errors <- character(runs)
+  unconstrained_errors <- character(runs) # here we safe the error for each run
   constrained_errors <- character(runs)
-  n_tracker = 0
+  n_tracker = 0 # here we keep track which n we are using a.t.m.
   
   
                                   
@@ -696,16 +698,15 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
 
   
   for (n in n_candidates){
-    print("enters for")
-    print("n_tracker equals:")
-    print(n_tracker)
     n_tracker = n_tracker + 1
     
     for (i in 1:runs) {
-      print("enter runs")
+      # create data
       x = runif(n)
       y = objective_function(x) + rnorm(n)
+      # compute the estimator
       ans = penspl(5,x,y,round(3 * (n^(1/(2*p + 3))),digits = 0),3,2.5)
+      # safe the computed estimator
       if (i == 1){
         ans_mean = ans
       }
@@ -717,6 +718,7 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
       constrained_errors[i] = mean(abs(objective_function(ans$xpl)-ans$cpl))
       unconstrained_errors[i] = mean(abs(objective_function(ans$xpl)-ans$ucpl))
     }
+    # compute the average of the estimators
     ans_mean = divide_ans(ans_mean,runs)
     unconstrained_errors = mean(as.numeric(unconstrained_errors))
     constrained_errors = mean(as.numeric(constrained_errors))
@@ -751,6 +753,9 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
   return(list("stats" = sim_results, "data" = ans_means))
 } # simulation
 
+
+# For the results to be plottet correctly one has to call run_simulation and plot_results in succsession for each n
+# otherwise the results for n_1 are overwritten with the results of n_2 before they are plottet
 plot_results <- function(runs, n, objective_function_name,  objective_function, data){
   
   true_y = objective_function(data$xpl)
