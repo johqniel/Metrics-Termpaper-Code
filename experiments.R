@@ -558,6 +558,8 @@ bcspline=function(x,m){
 }
 
 
+
+if (TRUE == FALSE){
 x=runif(50)
 
 y=exp(2*x)+rnorm(50)
@@ -659,7 +661,7 @@ find_y <- function(xpl,y,x){
   return(x)
   
 }
-
+} # experimenting around
 
 
 # how many times do we run the simulation
@@ -672,10 +674,8 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
   p = 3 # degree of splines used
   unconstrained_errors <- character(runs)
   constrained_errors <- character(runs)
-  #ans_list <- list(length(n_candidates))
-  j = 0
-  #unconstrained_errors_data <- character(runs)
-  #constrained_errors_data <- character(runs)
+  n_tracker = 0
+  
   
                                   
   # Create the data frames.
@@ -684,11 +684,8 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
     datapoints="",
     knots="",
     objective_function="",
-    #constrained_errors_data="",
-    #unconstrained_errors_data="",
     constrained_errors = "",
     unconstrained_errors = "",
-    #time
     stringsAsFactors = FALSE
   )
 
@@ -696,15 +693,14 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
   
   for (n in n_candidates){
     print("enters for")
-    print("j equals:")
-    print(j)
-    j = j + 1
+    print("n_tracker equals:")
+    print(n_tracker)
+    n_tracker = n_tracker + 1
     
     for (i in 1:runs) {
       print("enter runs")
       x = runif(n)
       y = objective_function(x) + rnorm(n)
-      #print("we get to penspl")
       ans = penspl(5,x,y,round(3 * (n^(1/(2*p + 3))),digits = 0),3,2.5)
       if (i == 1){
         ans_mean = ans
@@ -712,26 +708,18 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
       else{
         ans_mean = add_ans(ans_mean,ans)
       }
-      #x = find_x_new(ans$xpl,x)
+    
       y_clean = objective_function(ans$xpl)
-      #y_clean_data = objective_function(x)
-      #y_constrained_data = find_y(ans$xpl,ans$cpl,x)
-      #y_unconstrained_data = find_y(ans$xpl,ans$ucpl,x)
-      #constrained_errors_data[i] = mean(abs(y_constrained_data - y_clean_data))
-      #unconstrained_errors_data[i] = mean(abs(y_unconstrained_data - y_clean_data))
       constrained_errors[i] = mean(abs(objective_function(ans$xpl)-ans$cpl))
       unconstrained_errors[i] = mean(abs(objective_function(ans$xpl)-ans$ucpl))
     }
     ans_mean = divide_ans(ans_mean,runs)
     unconstrained_errors = mean(as.numeric(unconstrained_errors))
     constrained_errors = mean(as.numeric(constrained_errors))
-    #unconstrained_errors_data = as.numeric(unconstrained_errors_data)
-    #constrained_errors_data = as.numeric(constrained_errors_data)
-    #unc_errors_data = mean(unconstrained_errors_data) 
-    #con_errors_data =mean(constrained_errors_data)
     
     
-    if (j == 1){
+    
+    if (n_tracker == 1){
       print("ans_means defined")
       ans_means = list(ans_mean)
     }
@@ -739,27 +727,25 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
       ans_means = c(ans_means, ans_mean)
     }
 
-  
+    print(" we got here")
     sim_results = rbind(sim_results, data.frame(
       runs = runs,
       datapoints = n,
       knots = round(3*(n^(1/(2*p + 3)))),
       objective_function = c(objective_function_name),
-      #constrained_errors_data = c(con_errors_data),
-      #unconstrained_errors_data = c(unc_errors_data),
       constrained_errors = c(constrained_errors),
       unconstrained_errors = c(unconstrained_errors),
-      
-      #time
       stringsAsFactors = FALSE)
     )
+    
+    print("we dont get here")
     
   }
   
   
   print("lol")
   return(list("stats" = sim_results, "data" = ans_means))
-}
+} # simulation
 
 plot_results <- function(runs, n, objective_function_name,  objective_function, data){
   
@@ -775,7 +761,7 @@ plot_results <- function(runs, n, objective_function_name,  objective_function, 
   
   legend("topleft", legend=c("constrained","unconstrained","objective"), col = c("blue","red","black"),lty=1:2,cex=0.8,title = paste(objective_function_name,", n =",as.character(n)))
   
-}
+} # plot routine
   
 if (TRUE == TRUE){
   function_1 <- function(x){
@@ -836,7 +822,7 @@ if (TRUE == TRUE){
     print("i equals:")
     print(i)
     
-    sim_results_new = run_simulation(runs,n_candidates,bundle[[i]],bundle[[j]])
+    sim_results_new = run_simulation(runs,n_candidates,bundle[[1]],bundle[[2]])
     sim_results = rbind(sim_results,sim_results_new$stats)
     objective_functions[[i]][[3]] = sim_results_new$data 
     i = i + 1
@@ -858,7 +844,10 @@ if (TRUE == TRUE){
   #plot_results(runs,1000,objective_functions[[1]]$name,objective_functions[[1]][[1]],objective_functions[[1]]$data[[1]])
 
 
-               
+} # simulation   
+ 
+if (TRUE == TRUE){ 
+             
   j = 1
   for (bundle in objective_functions){
     print("bundle:")
@@ -872,13 +861,13 @@ if (TRUE == TRUE){
     
     i = 1
     for (n in n_candidates){
-      data = ((objective_functions[[1]])$data)[[1]]
+      data = ((objective_functions[[j]])$data)[[1]]
       xpl = objective_functions[[j]]$data[[i]]$xpl
-      print("jetzt kommt xps:")
+      print("jetzt kommt xpl:")
       print(xpl)
       print("zweiter Versuch")
-      print(data$xps)
-      xpl = objective_functions[[1]]$data[[1]]$xpl
+      print(data$xpl)
+      xpl = objective_functions[[j]]$data[[1]]$xpl
       print("versuch drei")
       print(xpl)
       print("about to plot i equals %", i)
@@ -890,9 +879,11 @@ if (TRUE == TRUE){
     j = j + 1
   }
   
-} # testing
+} # plotting
 
 
+
+if (TRUE == FALSE){
 
 x=runif(100)
 
@@ -912,3 +903,4 @@ lines(ans$xpl,y_clean,col = "black")
 
 legend("topleft", legend=c("constrained","unconstrained","objective"), col = c("blue","red","black"),lty=1:2,cex=0.8,title = paste(objective_functions[[1]]$name,", n =",as.character(100)))
 
+} # more experimenting around
