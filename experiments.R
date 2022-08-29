@@ -671,7 +671,7 @@ find_y <- function(xpl,y,x){
 # how many times do we run the simulation
 runs = 1
 # how many datapoint in each run
-n_candidates = c(100)
+n_candidates = c(3000)
 
 
 run_simulation <-function(runs,n_candidates, objective_function, objective_function_name){
@@ -891,9 +891,9 @@ if (TRUE == TRUE){
 
 if (TRUE == FALSE){
 
-x=runif(100)
+x=runif(50)
 
-y=objective_functions[[1]][[1]](x)+rnorm(100)
+y=objective_functions[[1]][[1]](x)+rnorm(50)
 
 ans=penspl(5,x,y,10,3,2.5)
 
@@ -907,6 +907,6 @@ lines(ans$xpl,ans$ucpl,col= "red")
 
 lines(ans$xpl,y_clean,col = "black")
 
-legend("topleft", legend=c("constrained","unconstrained","objective"), col = c("blue","red","black"),lty=1:2,cex=0.8,title = paste(objective_functions[[1]]$name,", n =",as.character(100)))
+legend("topleft", legend=c("constrained","unconstrained","objective"), col = c("blue","red","black"),lty=1:2,cex=0.8,title = paste(objective_functions[[1]]$name,", n =",as.character(50)))
 
 } # more experimenting around
