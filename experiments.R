@@ -578,6 +578,10 @@ lines(ans$xpl,ans$ucpl,col=2)
 
 y_clean = exp(2*ans$xpl)
 
+} #experimenting around
+
+if (TRUE == TRUE){
+
 divide_ans <- function(ans,runs){
   
   #           cfit = constrained fit
@@ -661,13 +665,13 @@ find_y <- function(xpl,y,x){
   return(x)
   
 }
-} # experimenting around
+} # some functions
 
 
 # how many times do we run the simulation
 runs = 1
 # how many datapoint in each run
-n_candidates = c(10,50,100,500)
+n_candidates = c(100)
 
 
 run_simulation <-function(runs,n_candidates, objective_function, objective_function_name){
@@ -848,7 +852,7 @@ if (TRUE == TRUE){
  
 if (TRUE == TRUE){ 
              
-  j = 1
+  bundle_tracker = 1
   for (bundle in objective_functions){
     print("bundle:")
     print(bundle)
@@ -859,24 +863,26 @@ if (TRUE == TRUE){
     objective_function_name = bundle[[2]]
     
     
-    i = 1
+    n_tracker = 1
     for (n in n_candidates){
-      data = ((objective_functions[[j]])$data)[[1]]
-      xpl = objective_functions[[j]]$data[[i]]$xpl
+      data = ((objective_functions[[bundle_tracker]])$data)[[1]]
+      
+      if (TRUE == FALSE){
+      xpl = objective_functions[[bundle_tracker]]$data[[1]]$xpl
       print("jetzt kommt xpl:")
       print(xpl)
       print("zweiter Versuch")
       print(data$xpl)
-      xpl = objective_functions[[j]]$data[[1]]$xpl
+      xpl = objective_functions[[bundle_tracker]]$data[[1]]$xpl
       print("versuch drei")
       print(xpl)
-      print("about to plot i equals %", i)
-      
+      } # debugging stuff
+
       plot_results(runs,n,objective_function_name,objective_function,data)
       print("plotted")
-      i = i+1
+      n_tracker = n_tracker+1
     } 
-    j = j + 1
+    bundle_tracker = bundle_tracker + 1
   }
   
 } # plotting
