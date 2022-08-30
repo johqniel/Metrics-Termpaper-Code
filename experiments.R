@@ -821,7 +821,7 @@ if (TRUE == TRUE){
 
 } # Here we define objective functions
 
-if (TRUE == TRUE){
+if (TRUE == FALSE){
 
   sim_results = run_simulation(runs,n_candidates,function_0,"x -> x + 1")$stats
   print("worked")
@@ -855,7 +855,7 @@ if (TRUE == TRUE){
 
 } # simulation   
  
-if (TRUE == TRUE){ 
+if (TRUE == FALSE){ 
              
   bundle_tracker = 1
   for (bundle in objective_functions){
@@ -918,7 +918,7 @@ for (bundle in objective_functions){
   
   lines(ans$xpl,y_clean,col = "black")
   
-  legend("topleft", legend=c("constrained","unconstrained","objective"), col = c("blue","red","black"),lty=1:2,cex=0.8,title = paste(objective_functions[[1]]$name,", n =",as.character(50)))
+  legend("topleft", legend=c("constrained","unconstrained","objective"), col = c("blue","red","black"),lty=1:2,cex=0.8,title = paste(name,", n =",as.character(50)))
   
   
 }
