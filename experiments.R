@@ -779,9 +779,9 @@ if (TRUE == TRUE){
   function_1_name = "x-> x^3"
   
   function_2 <- function(x){
-    return(-0.005*x +3)
+    return(-0.3*x +3)
   }
-  function_2_name = "x -> -0.005*x +3"
+  function_2_name = "x -> -0.3*x +3"
   
   function_3 <- function(x){
     return(2+x^3-0.2*x)
@@ -791,16 +791,35 @@ if (TRUE == TRUE){
   function_4 <- function(x){
     return(-x^3)
   }
-
-
-
   function_4_name = "x -> -x^3"
+  
+  function_5 <- function(x){
+    return(x + x^3)
+  }
+  function_5_name = "x -> x^3 + x"
+  
+  function_6 <- function(x){
+    return(1 / ( 1 + 5 * exp(- 5 * x)))
+  }
+  
+  function_6_name = "x -> 5 * exp(-5 * x) + 1"
+  
+  function_7 <- function(x){
+    return(4 * x + 2)
+  }
+  function_7_name = "x -> 4 * x + 2"
+
+  
   
   objective_functions = list(
     list(function(x) function_1(x),name = function_1_name,data = NULL),
     list(f = function(x) function_2(x),name = function_2_name, data = NULL),
     list(f = function(x) function_3(x),name = function_3_name, data = NULL),
-    list(f = function(x) function_4(x),name = function_4_name, data = NULL)
+    list(f = function(x) function_4(x),name = function_4_name, data = NULL),
+    list(f = function(x) function_5(x), name = function_5_name, data = NULL),
+    list(f = function(x) function_6(x), name = function_6_name, data = NULL),
+    list(f = function(x) function_7(x), name = function_7_name, data = NULL)
+    
   )
   
   objective_functions_2 = list(
@@ -897,7 +916,12 @@ if (TRUE == FALSE){
 if (TRUE == FALSE){
 
   
-n = 50
+n = 100
+p = 3
+knots = round(3 * (n^(1/(2*p + 3))))
+q = 3
+pen = 2.5
+type = 1
 
 for (bundle in objective_functions){
   print("enter for")
@@ -907,7 +931,7 @@ for (bundle in objective_functions){
   
   x = runif(n)
   y = objective_function(x) + rnorm(50)
-  ans = penspl(5,x,y,10,3,2.5)
+  ans = penspl(type,x,y,knots,q,pen)
   y_clean = objective_function(ans$xpl)
   
   plot(x,y)
@@ -918,7 +942,7 @@ for (bundle in objective_functions){
   
   lines(ans$xpl,y_clean,col = "black")
   
-  legend("topleft", legend=c("constrained","unconstrained","objective"), col = c("blue","red","black"),lty=1:2,cex=0.8,title = paste(name,", n =",as.character(50)))
+  legend("topleft", legend=c("constrained","unconstrained","objective"), col = c("blue","red","black"),lty=1:2,cex=0.8,title = paste(name,", n =",as.character(n), ", knots = ",as.character(knots), ", penalty = ", as.character(pen)))
   
   
 }
@@ -944,3 +968,58 @@ lines(ans$xpl,y_clean,col = "black")
 legend("topleft", legend=c("constrained","unconstrained","objective"), col = c("blue","red","black"),lty=1:2,cex=0.8,title = paste(objective_functions[[1]]$name,", n =",as.character(50)))
 
 } # more experimenting around
+
+if (TRUE == FALSE){
+  n = 100
+  x=runif(n)
+  p = 3
+  q = 3
+  pen = 2.5
+  
+  knots = round(3 * (n^(1/(2*p + 3))))
+  
+  g <- function(x){
+    return(100 * ((x-0.5))^5)
+  }
+  name = "Hello"
+  
+  y=g(x)+rnorm(n)
+  
+  ans=penspl(1,x,y,10,q,pen)
+  
+  y_clean = g(ans$xpl)
+  
+  plot(x,y)
+  
+  cfit = ans$cfit[order(x, decreasing=FALSE)]
+  ucfit = ans$ucfit[order(x, decreasing = FALSE)]
+  x = sort(x,decreasing = FALSE)
+  
+  lines(ans$xpl,ans$cpl, col = "blue")
+  
+  lines(ans$xpl,ans$ucpl,col= "red")
+  
+  lines(ans$xpl,y_clean,col = "black")
+  
+  #lines(x,ucfit,col = "green")
+  
+  #lines(x,cfit,col = "orange")
+  
+  legend("topleft", legend=c("constrained","unconstrained","objective", "ucfit", "cfit"), col = c("blue","red","black", "green", "orange"),lty=1:2,cex=0.8,title = paste(name,", n =",as.character(n), ", knots = ", as.character(knots)))
+  
+  
+  
+}
+
+print(ans$cgcv)
+print(ans$xpl)
+#  returns: cfit = constrained fit
+#           ucfit = unconstrained fit
+#           cgcv = constrained GCV
+#           ucgcv = unconstrained GCV
+#           edfc = effective degrees of freedom for constrained fit
+#           edfu = effective degrees of freedom for unconstrained fit
+#           knots
+#           xpl = grid of points for plotting smooth fits
+#           cpl = constrained fit values at xpl
+#           ucpl = unconstrained fit values at xpl
