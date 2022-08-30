@@ -896,6 +896,35 @@ if (TRUE == TRUE){
 
 if (TRUE == FALSE){
 
+  
+n = 50
+
+for (bundle in objective_functions){
+  print("enter for")
+  objective_function = bundle[[1]]
+  print("read f")
+  name = bundle[[2]]
+  
+  x = runif(n)
+  y = objective_function(x) + rnorm(50)
+  ans = penspl(5,x,y,10,3,2.5)
+  y_clean = objective_function(ans$xpl)
+  
+  plot(x,y)
+  
+  lines(ans$xpl,ans$cpl, col = "blue")
+  
+  lines(ans$xpl,ans$ucpl,col= "red")
+  
+  lines(ans$xpl,y_clean,col = "black")
+  
+  legend("topleft", legend=c("constrained","unconstrained","objective"), col = c("blue","red","black"),lty=1:2,cex=0.8,title = paste(objective_functions[[1]]$name,", n =",as.character(50)))
+  
+  
+}
+
+
+
 x=runif(50)
 
 y=objective_functions[[1]][[1]](x)+rnorm(50)
