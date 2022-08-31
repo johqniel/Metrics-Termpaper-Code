@@ -678,6 +678,7 @@ n_candidates = c(3000)
 
 run_simulation <-function(runs,n_candidates, objective_function, objective_function_name){
   p = 3 # degree of splines used
+  confidence_level = 0.99
   unconstrained_errors <- character(runs) # here we safe the error for each run
   constrained_errors <- character(runs)
   n_tracker = 0 # here we keep track which n we are using a.t.m.
@@ -692,6 +693,9 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
     objective_function="",
     constrained_errors = "",
     unconstrained_errors = "",
+    error_difference_variance  = "",
+    confidence_interval = "",
+    p_value = "",
     stringsAsFactors = FALSE
   )
 
@@ -720,8 +724,8 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
     }
     # compute the average of the estimators
     ans_mean = divide_ans(ans_mean,runs)
-    unconstrained_errors = mean(as.numeric(unconstrained_errors))
-    constrained_errors = mean(as.numeric(constrained_errors))
+    unconstrained_errors = as.numeric(unconstrained_errors)
+    constrained_errors = as.numeric(constrained_errors)
     
     
     
@@ -734,13 +738,19 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
     }
 
     print(" we got here")
+    test_result = t.test((constrained_errors-unconstrained_errors),c(),"two.sided",0, FALSE, confidence_level)
+    
     sim_results = rbind(sim_results, data.frame(
       runs = runs,
       datapoints = n,
       knots = round(3*(n^(1/(2*p + 3)))),
       objective_function = c(objective_function_name),
-      constrained_errors = c(constrained_errors),
-      unconstrained_errors = c(unconstrained_errors),
+      constrained_errors = c(mean(constrained_errors)),
+      unconstrained_errors = c(mean(unconstrained_errors)),
+      error_difference_variance = c(var(constrained_errors - unconstrained_errors)),
+      confidence_interval = test_result$conf.int,
+      p_value = test_result$p.value,
+                               
       stringsAsFactors = FALSE)
     )
     
@@ -971,7 +981,7 @@ legend("topleft", legend=c("constrained","unconstrained","objective"), col = c("
 
 if (TRUE == FALSE){
   
-  stats = run_simulation(1000,c(50),g,"x -> a * x^5 - b * x - exp(x - 1)")$stats
+  stats = run_simulation(10000,c(50),g,"x -> a * x^5 - b * x - exp(x - 1)")$stats
   
   print(stats)
   
