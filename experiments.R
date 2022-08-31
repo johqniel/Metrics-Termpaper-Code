@@ -970,22 +970,24 @@ legend("topleft", legend=c("constrained","unconstrained","objective"), col = c("
 } # more experimenting around
 
 if (TRUE == FALSE){
-  n = 100
+  n = 50
   x=runif(n)
   p = 3
   q = 3
-  pen = 2.5
+  pen = 1
+  type = 1
   
   knots = round(3 * (n^(1/(2*p + 3))))
   
   g <- function(x){
-    return(100 * ((x-0.5))^5)
+    return(100 * (0.6*(x-0.5))^5-0.05* 0.6*x - exp(0.6*(x- 1)))
   }
-  name = "Hello"
+  name = "x -> 60 * (x - 1/2)^0.5 - 0.5 * x - exp(x - 1)"
+  name = "x -> g(x)"
   
   y=g(x)+rnorm(n)
   
-  ans=penspl(1,x,y,10,q,pen)
+  ans=penspl(type,x,y,knots,q,pen)
   
   y_clean = g(ans$xpl)
   
@@ -994,6 +996,8 @@ if (TRUE == FALSE){
   cfit = ans$cfit[order(x, decreasing=FALSE)]
   ucfit = ans$ucfit[order(x, decreasing = FALSE)]
   x = sort(x,decreasing = FALSE)
+  error_c = mean(abs(g(ans$xpl)- ans$cpl))
+  error_uc = mean(abs(g(ans$xpl)- ans$ucpl))
   
   lines(ans$xpl,ans$cpl, col = "blue")
   
@@ -1005,7 +1009,13 @@ if (TRUE == FALSE){
   
   #lines(x,cfit,col = "orange")
   
-  legend("topleft", legend=c("constrained","unconstrained","objective", "ucfit", "cfit"), col = c("blue","red","black", "green", "orange"),lty=1:2,cex=0.8,title = paste(name,", n =",as.character(n), ", knots = ", as.character(knots)))
+  legend("bottomleft", 
+         legend=c("constrained","unconstrained","objective"), 
+         col = c("blue","red","black"),
+         lty=1:2,
+         cex=0.8,
+         title = paste(name,", n =",as.character(n), ", knots = ", as.character(knots),", error =", as.character(error_c - error_uc))
+  )
   
   
   
