@@ -970,6 +970,16 @@ legend("topleft", legend=c("constrained","unconstrained","objective"), col = c("
 } # more experimenting around
 
 if (TRUE == FALSE){
+  
+  stats = run_simulation(1000,c(50),g,"x -> a * x^5 - b * x - exp(x - 1)")$stats
+  
+  print(stats)
+  
+  figure_5_seed = 3441
+  set.seed(figure_5_seed)
+ 
+  
+  
   n = 50
   x=runif(n)
   p = 3
@@ -1017,7 +1027,7 @@ if (TRUE == FALSE){
          title = paste(name,", n =",as.character(n), ", knots = ", as.character(knots),", error =", as.character(error_c - error_uc))
   )
   
-  
+ 
   
 }
 
