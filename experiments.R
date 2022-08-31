@@ -981,7 +981,9 @@ legend("topleft", legend=c("constrained","unconstrained","objective"), col = c("
 
 if (TRUE == FALSE){
   
-  stats = run_simulation(10000,c(50),g,"x -> a * x^5 - b * x - exp(x - 1)")$stats
+for (n in c(50,250,500,2000)){
+  
+  stats = run_simulation(1000,c(n),g,"x -> a * x^5 - b * x - exp(x - 1)")$stats
   
   print(stats)
   
@@ -990,7 +992,7 @@ if (TRUE == FALSE){
  
   
   
-  n = 50
+  #n = 50
   x=runif(n)
   p = 3
   q = 3
@@ -1036,7 +1038,7 @@ if (TRUE == FALSE){
          cex=0.8,
          title = paste(name,", n =",as.character(n), ", knots = ", as.character(knots),", error =", as.character(error_c - error_uc))
   )
-  
+} 
  
   
 }
