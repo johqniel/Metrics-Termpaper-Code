@@ -847,15 +847,48 @@ if (TRUE == TRUE){
   
   function_9_name = "x -> h(x)"
   
+  f_1 <- function(x){
+    return(10*(x-0.5)^3+0.5)
+  }
+  f_1_name = "x -> 10 * (x - 0.5)^3 +0.5"
+  f_2 <- function(x){
+    return(0.1*log(50 * x))
+  }
+  f_2_name = "x -> 0.1 * ln(50 * x)"
+  
+  f_3 = Vectorize(function_9,vectorize.args = "x")
+  f_3_name = "x -> f_3(x)"
+  
+  f_4 = Vectorize(function_8,vectorize.args = "x")
+  f_4_name = "x -> f_4(x)"
+  
+  f_5 <- function(x){
+    return(x^3 - 0.2 *x + 2)
+  }
+  f_5_name = "x -> x^3 - 0.2 * x + 2"
+  f_6_name = "x -> -1.75 * x^2 + 2.65 * x"
+  f_6 <- function(x){
+    return(-1.75 * x^2 + 2.65 * x)
+  }
+  
+  experiment_list = list(
+    list(f = function(x) f_1(x), name = f_1_name, data_1 = NULL, data_2 = NULL, data_3 = NULL, data_4 = NULL, data_5 = NULL, data_6= NULL, data_7 = NULL, data_8 = NULL),
+    list(f = function(x) f_2(x), name = f_2_name, data_1 = NULL, data_2 = NULL, data_3 = NULL, data_4 = NULL, data_5 = NULL, data_6= NULL, data_7 = NULL, data_8 = NULL),
+    list(f = function(x) f_3(x), name = f_3_name, data_1 = NULL, data_2 = NULL, data_3 = NULL, data_4 = NULL, data_5 = NULL, data_6= NULL, data_7 = NULL, data_8 = NULL),
+    list(f = function(x) f_4(x), name = f_4_name, data_1 = NULL, data_2 = NULL, data_3 = NULL, data_4 = NULL, data_5 = NULL, data_6= NULL, data_7 = NULL, data_8 = NULL),
+    list(f = function(x) f_5(x), name = f_5_name, data_1 = NULL, data_2 = NULL, data_3 = NULL, data_4 = NULL, data_5 = NULL, data_6= NULL, data_7 = NULL, data_8 = NULL),
+    list(f = function(x) f_6(x), name = f_6_name, data_1 = NULL, data_2 = NULL, data_3 = NULL, data_4 = NULL, data_5 = NULL, data_6= NULL, data_7 = NULL, data_8 = NULL)
+    )
+  
   
   objective_functions = list(
     list(function(x) function_1(x),name = function_1_name,data = NULL),
-    list(f = function(x) function_2(x),name = function_2_name, data = NULL),
-    list(f = function(x) function_3(x),name = function_3_name, data = NULL),
-    list(f = function(x) function_4(x),name = function_4_name, data = NULL),
-    list(f = function(x) function_5(x), name = function_5_name, data = NULL),
-    list(f = function(x) function_6(x), name = function_6_name, data = NULL),
-    list(f = function(x) function_7(x), name = function_7_name, data = NULL)
+    list(f = function(x) function_2(x),name = function_2_name, data_1 = NULL, data_2 = NULL, data_3 = NULL, data_4 = NULL, data_5 = NULL, data_6= NULL, data_7 = NULL, data_8 = NULL),
+    list(f = function(x) function_3(x),name = function_3_name, data_1 = NULL, data_2 = NULL, data_3 = NULL, data_4 = NULL, data_5 = NULL, data_6= NULL, data_7 = NULL, data_8 = NULL),
+    list(f = function(x) function_4(x),name = function_4_name, data_1 = NULL, data_2 = NULL, data_3 = NULL, data_4 = NULL, data_5 = NULL, data_6= NULL, data_7 = NULL, data_8 = NULL),
+    list(f = function(x) function_5(x), name = function_5_name, data_1 = NULL, data_2 = NULL, data_3 = NULL, data_4 = NULL, data_5 = NULL, data_6= NULL, data_7 = NULL, data_8 = NULL),
+    list(f = function(x) function_6(x), name = function_6_name, data_1 = NULL, data_2 = NULL, data_3 = NULL, data_4 = NULL, data_5 = NULL, data_6= NULL, data_7 = NULL, data_8 = NULL),
+    list(f = function(x) function_7(x), name = function_7_name, data_1 = NULL, data_2 = NULL, data_3 = NULL, data_4 = NULL, data_5 = NULL, data_6= NULL, data_7 = NULL, data_8 = NULL)
     
   )
   
@@ -911,7 +944,7 @@ if (TRUE == FALSE){
 
 } # simulation   
  
-if (TRUE == FALSE){ 
+if (TRUE == TRUE){ 
              
   bundle_tracker = 1
   for (bundle in objective_functions){
@@ -1025,7 +1058,7 @@ for (n in c(50,250,500,2000)){
 }
   
   
-  
+}# i dont know what this is 
   
 if (TRUE = FALSE){
   figure_5_seed = 3441
@@ -1107,9 +1140,25 @@ if (TRUE = FALSE){
   
 } # Figure 5
  
- 
+if (TRUE == FALSE){
+  sim_results = run_simulation(runs, c(50), function_1, "function 1")$stats
+  runs = 50
+  n_candidates = c(50,100)
+  i = 1
+  for (bundle in experiment_list){
+    j = 1
+    for (n in n_candidates){
+      sim_results_new = run_simulation(runs,c(n),bundle[[1]],bundle[[2]])
+      sim_results = rbind(sim_results,sim_results_new$stats)
+      experiment_list[[i]][[2 + j]] = sim_results_new$data
+      j = j +1
+    }
+    
+    i = i + 1
+  }
+}# big simulation
   
-
+#print(experiment_list[[4]]$data_2[[1]]$xpl)
 
 print(ans$cgcv)
 print(ans$xpl)
