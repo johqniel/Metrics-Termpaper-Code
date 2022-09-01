@@ -1010,13 +1010,14 @@ if (TRUE == FALSE){
   
 for (n in c(50,250,500,2000)){
   
+  n = 50
   f = Vectorize(function_8,vectorize.args = "x")
   h = Vectorize(function_9, vectorize.args = "x")
-  g = f
+  g = h
   
 
   
-  stats = run_simulation(1000,c(n),g,"x -> a * x^5 - b * x - exp(x - 1)")$stats
+  stats = run_simulation(100,c(n),g,"x -> a * x^5 - b * x - exp(x - 1)")$stats
   
   print(stats)
   
@@ -1025,6 +1026,8 @@ for (n in c(50,250,500,2000)){
   
   
   
+  
+if (TRUE = FALSE){
   figure_5_seed = 3441
   set.seed(figure_5_seed)
  
@@ -1032,7 +1035,7 @@ for (n in c(50,250,500,2000)){
   
   
   n = 50
-  x=runif(n)
+  x= runif(n)
   p = 3
   q = 3
   pen = 1
@@ -1046,10 +1049,31 @@ for (n in c(50,250,500,2000)){
     return(100 * (0.6*(x-0.5))^5-0.05* 0.6*x - exp(0.6*(x- 1)))
   }
   
+  g <- function(x){
+    a = 10
+    b = 0.5
+    c = 0.5
+    return(a * (x - b)^3 + c)
+  }
+  g <- function(x){
+    a = 10
+    b = 0.25
+    c = 0.75
+    d = 9/16
+    if(x < 0.5){
+      return(a * (x - b)^3 + b)
+    }
+    else{
+      return( a * (x - c)^3 + d)
+    }
+    
+  }
+  g = Vectorize(g,vectorize.args = "x")
+  
   name = "x -> 60 * (x - 1/2)^0.5 - 0.5 * x - exp(x - 1)"
   name = "x -> g(x)"
   
-  y=g(x)+rnorm(n)
+  y=g(x)+ rnorm(n)
   
   ans=penspl(type,x,y,knots,q,pen)
   
@@ -1081,11 +1105,11 @@ for (n in c(50,250,500,2000)){
          title = paste(name,", n =",as.character(n), ", knots = ", as.character(knots),", error =", as.character(error_c - error_uc))
   )
   
-  
+} # Figure 5
  
  
   
-}
+
 
 print(ans$cgcv)
 print(ans$xpl)
