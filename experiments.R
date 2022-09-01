@@ -821,26 +821,30 @@ if (TRUE == TRUE){
   
   function_8 <- function(x){
     f = 0
-    if (x<0.25){
-      f = (x-0.25)^3
+    if (x<0.35){
+      f = 25 * (x-0.35)^3
     }
-    if (x>0.75){
-      f = (x-0.75)^3
+    if (x>0.65){
+      f = 25* (x-0.65)^3
     }
     return(f)
   }
+  function_8 = Vectorize(function_8, vectorize.args = "x")
   function_8_name = "x -> f(x)"
+  
   
   function_9 <- function(x){
     f = 0
     if (x< 0.5){
-      f = 1 / log(0.5-x)
+      f = -(1 / exp(1/(0.5-x)))
     }
     if (x>0.5){
-      f = - 1 / log(x - 0.5)
+      f =  (1 / exp(1/(x - 0.5)))
     }
     return(f)
   }
+  function_9 = Vectorize(function_9, vectorize.args = "x")
+  
   function_9_name = "x -> h(x)"
   
   
@@ -1006,20 +1010,28 @@ if (TRUE == FALSE){
   
 for (n in c(50,250,500,2000)){
   
-  f = function_8
-  h = function_9
+  f = Vectorize(function_8,vectorize.args = "x")
+  h = Vectorize(function_9, vectorize.args = "x")
   g = f
+  
+
   
   stats = run_simulation(1000,c(n),g,"x -> a * x^5 - b * x - exp(x - 1)")$stats
   
   print(stats)
   
+  
+}
+  
+  
+  
   figure_5_seed = 3441
   set.seed(figure_5_seed)
  
+
   
   
-  #n = 50
+  n = 50
   x=runif(n)
   p = 3
   q = 3
@@ -1028,10 +1040,11 @@ for (n in c(50,250,500,2000)){
   
   knots = round(3 * (n^(1/(2*p + 3))))
   
+
+  
   g <- function(x){
     return(100 * (0.6*(x-0.5))^5-0.05* 0.6*x - exp(0.6*(x- 1)))
   }
-  g = f
   
   name = "x -> 60 * (x - 1/2)^0.5 - 0.5 * x - exp(x - 1)"
   name = "x -> g(x)"
@@ -1067,7 +1080,9 @@ for (n in c(50,250,500,2000)){
          cex=0.8,
          title = paste(name,", n =",as.character(n), ", knots = ", as.character(knots),", error =", as.character(error_c - error_uc))
   )
-} 
+  
+  
+ 
  
   
 }
