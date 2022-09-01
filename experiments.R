@@ -818,7 +818,30 @@ if (TRUE == TRUE){
     return(4 * x + 2)
   }
   function_7_name = "x -> 4 * x + 2"
-
+  
+  function_8 <- function(x){
+    f = 0
+    if (x<0.25){
+      f = (x-0.25)^3
+    }
+    if (x>0.75){
+      f = (x-0.75)^3
+    }
+    return(f)
+  }
+  function_8_name = "x -> f(x)"
+  
+  function_9 <- function(x){
+    f = 0
+    if (x< 0.5){
+      f = 1 / log(0.5-x)
+    }
+    if (x>0.5){
+      f = - 1 / log(x - 0.5)
+    }
+    return(f)
+  }
+  function_9_name = "x -> h(x)"
   
   
   objective_functions = list(
@@ -983,6 +1006,10 @@ if (TRUE == FALSE){
   
 for (n in c(50,250,500,2000)){
   
+  f = function_8
+  h = function_9
+  g = f
+  
   stats = run_simulation(1000,c(n),g,"x -> a * x^5 - b * x - exp(x - 1)")$stats
   
   print(stats)
@@ -1004,6 +1031,8 @@ for (n in c(50,250,500,2000)){
   g <- function(x){
     return(100 * (0.6*(x-0.5))^5-0.05* 0.6*x - exp(0.6*(x- 1)))
   }
+  g = f
+  
   name = "x -> 60 * (x - 1/2)^0.5 - 0.5 * x - exp(x - 1)"
   name = "x -> g(x)"
   
