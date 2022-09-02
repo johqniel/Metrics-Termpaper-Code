@@ -558,29 +558,27 @@ bcspline=function(x,m){
 }
 
 
+############################################################
 
-if (TRUE == FALSE){
-x=runif(50)
+# Section 0                                                #
 
-y=exp(2*x)+rnorm(50)
-
-
-ans=penspl(5,x,y,10,3,2.5)
+###########################################################
 
 
+# This skript requieres the user to use the code provided by 
+# Mery C. MEyer on her Webpage: 
+#   https://www.stat.colostate.edu/~meyer/penspl.htm
 
 
-print(ans$xpl)
 
-lines(ans$xpl,ans$cpl)
+#############################################################
 
-lines(ans$xpl,ans$ucpl,col=2)
+#               Section 1                                  #
 
-y_clean = exp(2*ans$xpl)
+############################################################
 
-} #experimenting around
-
-if (TRUE == TRUE){
+# Here we define a few functions we use to compute the errors 
+# in the simulation
 
 divide_ans <- function(ans,runs){
   
@@ -625,55 +623,10 @@ add_ans <- function(ans_1,ans_2){
    
 }
 
-find_x_new <- function(xpl, x){
-  i = 1
-  for (candidate in xpl){
-    if (x[i]-candidate < 0){
-      x[i] = candidate
-      i = i + 1
-      #print("change")
-    } 
-  }
-  return(x)
-}
-
-find_indizes <- function(xpl,x){
-  i = 1
-  j = 1
-  for (candidate in xpl){
-    if (x[i]-candidate < 0){
-      x[i] = j
-      i = i + 1
-      #print("change")
-    } 
-    j = j + 1
-  }
-  return(x)
-}
-
-find_y <- function(xpl,y,x){
-  i = 1
-  j = 1
-  for (candidate in xpl){
-    if (x[i]-candidate < 0){
-      x[i] = y[j]
-      i = i + 1
-      #print("change")
-    } 
-    j = j + 1 
-  }
-  return(x)
-  
-}
-} # some functions
 
 
-# how many times do we run the simulation
-runs = 1
-# how many datapoints in each run
-n_candidates = c(3000)
 
-
+# THe function that runs the simulations
 
 
 run_simulation <-function(runs,n_candidates, objective_function, objective_function_name){
@@ -705,11 +658,12 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
     n_tracker = n_tracker + 1
     
     for (i in 1:runs) {
+
       # create data
       x = runif(n)
       y = objective_function(x) + rnorm(n)
       # compute the estimator
-      ans = penspl(5,x,y,round(3 * (n^(1/(2*p + 3))),digits = 0),3,2.5)
+      ans = penspl(1,x,y,round(3 * (n^(1/(2*p + 3))),digits = 0),3,0.1)
       # safe the computed estimator
       if (i == 1){
         ans_mean = ans
@@ -730,14 +684,13 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
     
     
     if (n_tracker == 1){
-      print("ans_means defined")
       ans_means = list(ans_mean)
     }
     else{
       ans_means = c(ans_means, ans_mean)
     }
 
-    print(" we got here")
+ 
     test_result = t.test((constrained_errors-unconstrained_errors),c(),"two.sided",0, FALSE, confidence_level)
     
     sim_results = rbind(sim_results, data.frame(
@@ -754,14 +707,13 @@ run_simulation <-function(runs,n_candidates, objective_function, objective_funct
       stringsAsFactors = FALSE)
     )
     
-    print("we dont get here")
+  
     
   }
-  
-  
-  print("lol")
+
   return(list("stats" = sim_results, "data" = ans_means))
 } # simulation
+
 
 
 # For the results to be plottet correctly one has to call run_simulation and plot_results in succsession for each n
@@ -782,42 +734,30 @@ plot_results <- function(runs, n, objective_function_name,  objective_function, 
   
 } # plot routine
   
-if (TRUE == TRUE){
-  function_1 <- function(x){
-    return(x^3)
-  }
-  function_1_name = "x-> x^3"
+
+
   
-  function_2 <- function(x){
-    return(-0.3*x +3)
-  }
-  function_2_name = "x -> -0.3*x +3"
   
-  function_3 <- function(x){
-    return(2+x^3-0.2*x)
+# The final six functions we used in the simulation
+  f_1 <- function(x){
+    return(10*(x-0.5)^3+0.5)
   }
-  function_3_name = "x -> x^3 - 0.2x + 2"
-  
-  function_4 <- function(x){
-    return(-x^3)
+  f_1_name = "x -> 10 * (x - 0.5)^3 +0.5"
+  f_2 <- function(x){
+    return(0.1*log(50 * x))
   }
-  function_4_name = "x -> -x^3"
+  f_2_name = "x -> 0.1 * ln(50 * x)"
   
-  function_5 <- function(x){
-    return(x + x^3)
+
+  
+  f_5 <- function(x){
+    return(x^3 - 0.2 *x + 2)
   }
-  function_5_name = "x -> x^3 + x"
-  
-  function_6 <- function(x){
-    return(1 / ( 1 + 5 * exp(- 5 * x)))
+  f_5_name = "x -> x^3 - 0.2 * x + 2"
+  f_6_name = "x -> -1.75 * x^2 + 2.65 * x"
+  f_6 <- function(x){
+    return(-1.75 * x^2 + 2.65 * x)
   }
-  
-  function_6_name = "x -> 5 * exp(-5 * x) + 1"
-  
-  function_7 <- function(x){
-    return(4 * x + 2)
-  }
-  function_7_name = "x -> 4 * x + 2"
   
   function_8 <- function(x){
     f = 0
@@ -845,32 +785,14 @@ if (TRUE == TRUE){
   }
   function_9 = Vectorize(function_9, vectorize.args = "x")
   
-  function_9_name = "x -> h(x)"
-  
-  f_1 <- function(x){
-    return(10*(x-0.5)^3+0.5)
-  }
-  f_1_name = "x -> 10 * (x - 0.5)^3 +0.5"
-  f_2 <- function(x){
-    return(0.1*log(50 * x))
-  }
-  f_2_name = "x -> 0.1 * ln(50 * x)"
-  
   f_3 = Vectorize(function_9,vectorize.args = "x")
   f_3_name = "x -> f_3(x)"
   
   f_4 = Vectorize(function_8,vectorize.args = "x")
   f_4_name = "x -> f_4(x)"
   
-  f_5 <- function(x){
-    return(x^3 - 0.2 *x + 2)
-  }
-  f_5_name = "x -> x^3 - 0.2 * x + 2"
-  f_6_name = "x -> -1.75 * x^2 + 2.65 * x"
-  f_6 <- function(x){
-    return(-1.75 * x^2 + 2.65 * x)
-  }
   
+  # A list containing the functions their names and space to save the data from the simulation
   experiment_list = list(
     list(f = function(x) f_1(x), name = f_1_name, data_1 = NULL, data_2 = NULL, data_3 = NULL, data_4 = NULL, data_5 = NULL, data_6= NULL, data_7 = NULL, data_8 = NULL),
     list(f = function(x) f_2(x), name = f_2_name, data_1 = NULL, data_2 = NULL, data_3 = NULL, data_4 = NULL, data_5 = NULL, data_6= NULL, data_7 = NULL, data_8 = NULL),
@@ -881,186 +803,22 @@ if (TRUE == TRUE){
     )
   
   
-  objective_functions = list(
-    list(function(x) function_1(x),name = function_1_name,data = NULL),
-    list(f = function(x) function_2(x),name = function_2_name, data_1 = NULL, data_2 = NULL, data_3 = NULL, data_4 = NULL, data_5 = NULL, data_6= NULL, data_7 = NULL, data_8 = NULL),
-    list(f = function(x) function_3(x),name = function_3_name, data_1 = NULL, data_2 = NULL, data_3 = NULL, data_4 = NULL, data_5 = NULL, data_6= NULL, data_7 = NULL, data_8 = NULL),
-    list(f = function(x) function_4(x),name = function_4_name, data_1 = NULL, data_2 = NULL, data_3 = NULL, data_4 = NULL, data_5 = NULL, data_6= NULL, data_7 = NULL, data_8 = NULL),
-    list(f = function(x) function_5(x), name = function_5_name, data_1 = NULL, data_2 = NULL, data_3 = NULL, data_4 = NULL, data_5 = NULL, data_6= NULL, data_7 = NULL, data_8 = NULL),
-    list(f = function(x) function_6(x), name = function_6_name, data_1 = NULL, data_2 = NULL, data_3 = NULL, data_4 = NULL, data_5 = NULL, data_6= NULL, data_7 = NULL, data_8 = NULL),
-    list(f = function(x) function_7(x), name = function_7_name, data_1 = NULL, data_2 = NULL, data_3 = NULL, data_4 = NULL, data_5 = NULL, data_6= NULL, data_7 = NULL, data_8 = NULL)
-    
-  )
-  
-  objective_functions_2 = list(
-    function(x) function_1(x),
-    function(x) function_2(x),
-    function(x) function_3(x)
-  )
-  
-  objective_functions_2[[1]](2)
-  objective_functions[[1]][[1]](2)
 
 
 
 
-  function_0 <- function(x){
-    return(x + 1)
-  }
 
-} # Here we define objective functions
+###############################################################
 
-if (TRUE == FALSE){
-
-  sim_results = run_simulation(runs,n_candidates,function_0,"x -> x + 1")$stats
-  print("worked")
+#              Section 2                                      #
   
-  i = 1
-  for (bundle in objective_functions){
-    print("i equals:")
-    print(i)
-    
-    sim_results_new = run_simulation(runs,n_candidates,bundle[[1]],bundle[[2]])
-    sim_results = rbind(sim_results,sim_results_new$stats)
-    objective_functions[[i]][[3]] = sim_results_new$data 
-    i = i + 1
-  }
-  
-  #print(sim_results$data)[[1]]$xpl
-  
-  #run_simulation(runs,n,function_1, "x -> x^3")
+###############################################################
   
   
-  print(sim_results)
-  print("objective_functions equals:")
-  print(objective_functions[[1]])
-  objective_functions[[1]]$data[[1]]$xpl
-  objective_functions[[1]][[3]][[1]]$xpl
-  print("done")
+  
+# THis seciton is dedicated to creating figure 5
   
   
-  #plot_results(runs,1000,objective_functions[[1]]$name,objective_functions[[1]][[1]],objective_functions[[1]]$data[[1]])
-
-
-} # simulation   
- 
-if (TRUE == TRUE){ 
-             
-  bundle_tracker = 1
-  for (bundle in objective_functions){
-    print("bundle:")
-    print(bundle)
-    objective_function = bundle[[1]]
-    print("objective evaluated")
-    print(objective_function(5))
-    
-    objective_function_name = bundle[[2]]
-    
-    
-    n_tracker = 1
-    for (n in n_candidates){
-      data = ((objective_functions[[bundle_tracker]])$data)[[1]]
-      
-      if (TRUE == FALSE){
-      xpl = objective_functions[[bundle_tracker]]$data[[1]]$xpl
-      print("jetzt kommt xpl:")
-      print(xpl)
-      print("zweiter Versuch")
-      print(data$xpl)
-      xpl = objective_functions[[bundle_tracker]]$data[[1]]$xpl
-      print("versuch drei")
-      print(xpl)
-      } # debugging stuff
-
-      plot_results(runs,n,objective_function_name,objective_function,data)
-      print("plotted")
-      n_tracker = n_tracker+1
-    } 
-    bundle_tracker = bundle_tracker + 1
-  }
-  
-} # plotting
-
-
-
-if (TRUE == FALSE){
-
-  
-n = 100
-p = 3
-knots = round(3 * (n^(1/(2*p + 3))))
-q = 3
-pen = 2.5
-type = 1
-
-for (bundle in objective_functions){
-  print("enter for")
-  objective_function = bundle[[1]]
-  print("read f")
-  name = bundle[[2]]
-  
-  x = runif(n)
-  y = objective_function(x) + rnorm(50)
-  ans = penspl(type,x,y,knots,q,pen)
-  y_clean = objective_function(ans$xpl)
-  
-  plot(x,y)
-  
-  lines(ans$xpl,ans$cpl, col = "blue")
-  
-  lines(ans$xpl,ans$ucpl,col= "red")
-  
-  lines(ans$xpl,y_clean,col = "black")
-  
-  legend("topleft", legend=c("constrained","unconstrained","objective"), col = c("blue","red","black"),lty=1:2,cex=0.8,title = paste(name,", n =",as.character(n), ", knots = ",as.character(knots), ", penalty = ", as.character(pen)))
-  
-  
-}
-
-
-
-x=runif(50)
-
-y=objective_functions[[1]][[1]](x)+rnorm(50)
-
-ans=penspl(5,x,y,10,3,2.5)
-
-y_clean = objective_functions[[1]][[1]](ans$xpl)
-
-plot(x,y)
-
-lines(ans$xpl,ans$cpl, col = "blue")
-
-lines(ans$xpl,ans$ucpl,col= "red")
-
-lines(ans$xpl,y_clean,col = "black")
-
-legend("topleft", legend=c("constrained","unconstrained","objective"), col = c("blue","red","black"),lty=1:2,cex=0.8,title = paste(objective_functions[[1]]$name,", n =",as.character(50)))
-
-} # more experimenting around
-
-if (TRUE == FALSE){
-  
-for (n in c(50,250,500,2000)){
-  
-  n = 50
-  f = Vectorize(function_8,vectorize.args = "x")
-  h = Vectorize(function_9, vectorize.args = "x")
-  g = h
-  
-
-  
-  stats = run_simulation(100,c(n),g,"x -> a * x^5 - b * x - exp(x - 1)")$stats
-  
-  print(stats)
-  
-  
-}
-  
-  
-}# i dont know what this is 
-  
-if (TRUE = FALSE){
   figure_5_seed = 3441
   set.seed(figure_5_seed)
  
@@ -1126,26 +884,29 @@ if (TRUE = FALSE){
   
   lines(ans$xpl,y_clean,col = "black")
   
-  #lines(x,ucfit,col = "green")
-  
-  #lines(x,cfit,col = "orange")
-  
-  legend("bottomleft", 
+legend("bottomleft", 
          legend=c("constrained","unconstrained","objective"), 
          col = c("blue","red","black"),
          lty=1:2,
          cex=0.8,
          title = paste(name,", n =",as.character(n), ", knots = ", as.character(knots),", error =", as.character(error_c - error_uc))
-  )
+)
   
-} # Figure 5
+##################################################################
+  
+#             Section 3                                         #
+  
+###################################################################
  
-if (TRUE == FALSE){
-  sim_results = run_simulation(runs, c(50), function_1, "function 1")$stats
-  runs = 1000
-  n_candidates = c(25,50,100,250,500,1000,5000)
-  i = 1
-  for (bundle in experiment_list){
+  
+  
+# The following paragraüh runs the simulation
+
+sim_results = run_simulation(runs, c(50), function_1, "function 1")$stats
+runs = 500
+n_candidates = c(25,50,100,250,500,1000,2000)
+i = 1
+for (bundle in experiment_list){
     j = 1
     print(bundle[[2]])
     for (n in n_candidates){
@@ -1157,13 +918,78 @@ if (TRUE == FALSE){
     }
     
     i = i + 1
-  }
-}# big simulation
+}
+
   
-print(experiment_list[[4]]$data_6[[1]]$cpl)
 
-#saveRDS(experiment_list, file="simulation_results.RData")
+# In the following are all other plots but figure 10 from the termpaper created
+  
+for (i in c(1,2,3,4,5,6)){
+  x = experiment_list[[1]]$data_1[[1]]$xpl
+  y = experiment_list[[i]]$f(x)
+  name = experiment_list[[i]]$name
+  plot(x, y, xlim = c(-0.2,1.2), type = "l", col = "black", ylab = "y", xlab = "x") 
+  lines(x = experiment_list[[i]]$data_1[[1]]$xpl, y = experiment_list[[i]]$data_1[[1]]$cpl, xlim = c(0,1), type = "l", col = "green")
+  lines(x = experiment_list[[i]]$data_2[[1]]$xpl, y = experiment_list[[i]]$data_2[[1]]$cpl, xlim = c(0,1), type = "l", col = "yellow")
+  lines(x = experiment_list[[i]]$data_3[[1]]$xpl, y = experiment_list[[i]]$data_3[[1]]$cpl, xlim = c(0,1), type = "l", col = "blue")
+  lines(x = experiment_list[[i]]$data_4[[1]]$xpl, y = experiment_list[[i]]$data_4[[1]]$cpl, xlim = c(0,1), type = "l", col = "red")
+  lines(x = experiment_list[[i]]$data_5[[1]]$xpl, y = experiment_list[[i]]$data_5[[1]]$cpl, xlim = c(0,1), type = "l", col = "orange")
+  lines(x = experiment_list[[i]]$data_6[[1]]$xpl, y = experiment_list[[i]]$data_6[[1]]$cpl, xlim = c(0,1), type = "l", col = "brown")
+  lines(x = experiment_list[[i]]$data_7[[1]]$xpl, y = experiment_list[[i]]$data_7[[1]]$cpl, xlim = c(0,1), type = "l", col = "pink")
+  legend("topleft", legend=c("n = 25","n = 50","n = 100", "n = 250", "n = 500", "n = 1000", "n = 2000", "objective"), col = c("green","yellow","blue","red","orange","brown","pink","black"),lty=1:2,cex=0.8,title = name)
 
+}
+  
+for (i in c(1,2,3,4,5,6)){
+    x = experiment_list[[1]]$data_1[[1]]$xpl
+    y = experiment_list[[i]]$f(x)
+    name = experiment_list[[i]]$name
+    plot(x, y, xlim = c(-0.2,1.2), type = "l", col = "black", ylab = "y", xlab = "x") 
+    lines(x = experiment_list[[i]]$data_1[[1]]$xpl, y = experiment_list[[i]]$data_1[[1]]$ucpl, xlim = c(0,1), type = "l", col = "green")
+    lines(x = experiment_list[[i]]$data_2[[1]]$xpl, y = experiment_list[[i]]$data_2[[1]]$ucpl, xlim = c(0,1), type = "l", col = "yellow")
+    lines(x = experiment_list[[i]]$data_3[[1]]$xpl, y = experiment_list[[i]]$data_3[[1]]$ucpl, xlim = c(0,1), type = "l", col = "blue")
+    lines(x = experiment_list[[i]]$data_4[[1]]$xpl, y = experiment_list[[i]]$data_4[[1]]$ucpl, xlim = c(0,1), type = "l", col = "red")
+    lines(x = experiment_list[[i]]$data_5[[1]]$xpl, y = experiment_list[[i]]$data_5[[1]]$ucpl, xlim = c(0,1), type = "l", col = "orange")
+    lines(x = experiment_list[[i]]$data_6[[1]]$xpl, y = experiment_list[[i]]$data_6[[1]]$ucpl, xlim = c(0,1), type = "l", col = "brown")
+    lines(x = experiment_list[[i]]$data_7[[1]]$xpl, y = experiment_list[[i]]$data_7[[1]]$ucpl, xlim = c(0,1), type = "l", col = "pink")
+    legend("topleft", legend=c("n = 25","n = 50","n = 100", "n = 250", "n = 500", "n = 1000", "n = 2000", "objective"), col = c("green","yellow","blue","red","orange","brown","pink","black"),lty=1:2,cex=0.8,title = name)
+    
+}
+  
+  
+####################################################################
+  
+#             Section 4                                           #
+  
+###################################################################
+  
+  
+  
+# In this section figure 10 is created
+
+
+if(TRUE == FALSE){
+  c_int_1 = c(0.045,0.025,0.015,0.01,0.01,0.005)
+  c_int_2 = c(0.065,0.045,0.035,0.025,0.02,0.01)
+  c_int_3 = c(0.075,0.045,0.035,0.03,0.02,0.015)
+  c_int_4 = c(0.045,0.025,0.02,0.015,0.01,0.01)
+  c_int_5 = c(0.06,0.035,0.025,0.02,0.01,0.01)
+  c_int_6 = c(0.044,0.024,0.019,0.014,0.009,0.009)
+  
+  n_points = c(25,100,250,500,1000,2000)
+  
+  plot(n_points,c_int_1,type = "l", col = "black", ylab = "- error", xlab = n)
+  lines(n_points,c_int_2, type = "l", col = "green")
+  lines(n_points,c_int_3, type = "l", col = "red")
+  lines(n_points,c_int_4, type = "l", col = "blue")
+  lines(n_points,c_int_5, type = "l", col = "orange")
+  lines(n_points,c_int_6, type = "l", col = "yellow")
+  legend("topright", legend=c("f_1","f_2", "f_3", "f_4", "f_5", "f_6"), col = c("black","green","red","blue","orange","yellow"),lty=1:2,cex=0.8)
+  
+}
+
+
+print(simulation)
 #test_list = readRDS("simulation_results.RData")
 
 #print(test_list[[2]]$data_4[[1]]$cpl)
