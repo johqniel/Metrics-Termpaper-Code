@@ -1142,12 +1142,14 @@ if (TRUE = FALSE){
  
 if (TRUE == FALSE){
   sim_results = run_simulation(runs, c(50), function_1, "function 1")$stats
-  runs = 50
-  n_candidates = c(50,100)
+  runs = 1000
+  n_candidates = c(25,50,100,250,500,1000,5000)
   i = 1
   for (bundle in experiment_list){
     j = 1
+    print(bundle[[2]])
     for (n in n_candidates){
+      print(n)
       sim_results_new = run_simulation(runs,c(n),bundle[[1]],bundle[[2]])
       sim_results = rbind(sim_results,sim_results_new$stats)
       experiment_list[[i]][[2 + j]] = sim_results_new$data
@@ -1158,8 +1160,13 @@ if (TRUE == FALSE){
   }
 }# big simulation
   
-#print(experiment_list[[4]]$data_2[[1]]$xpl)
+print(experiment_list[[4]]$data_6[[1]]$cpl)
 
+#saveRDS(experiment_list, file="simulation_results.RData")
+
+#test_list = readRDS("simulation_results.RData")
+
+#print(test_list[[2]]$data_4[[1]]$cpl)
 print(ans$cgcv)
 print(ans$xpl)
 #  returns: cfit = constrained fit
